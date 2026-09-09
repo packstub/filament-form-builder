@@ -2,7 +2,7 @@
 
 All notable changes to `packstub/filament-form-builder` are documented here.
 
-## 1.0.0 — unreleased
+## 1.0.0 — 2026-09-09
 
 ### Added
 
