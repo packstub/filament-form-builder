@@ -57,6 +57,7 @@ class SubmissionsRelationManager extends RelationManager
             ->columns([
                 IconColumn::make('read_at')
                     ->label('')
+                    ->state(fn (FormSubmission $record): string => $record->isRead() ? 'read' : 'unread')
                     ->icon(fn (FormSubmission $record): string => $record->isRead() ? 'heroicon-o-envelope-open' : 'heroicon-s-envelope')
                     ->color(fn (FormSubmission $record): string => $record->isRead() ? 'gray' : 'primary')
                     ->tooltip(fn (FormSubmission $record): string => $record->isRead()

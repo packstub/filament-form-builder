@@ -111,6 +111,7 @@ class FieldBlocks
                     'half' => __('packstub-form-builder::form-builder.editor.width_half'),
                 ])
                 ->default('full')
+                ->formatStateUsing(fn (?string $state): string => $state ?: 'full')
                 ->native(false);
         }
 

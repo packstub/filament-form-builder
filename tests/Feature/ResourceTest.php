@@ -97,6 +97,7 @@ it('lists, views, marks and deletes submissions', function (): void {
     $manager = livewire(SubmissionsRelationManager::class, ['ownerRecord' => $form, 'pageClass' => EditForm::class])
         ->assertCanSeeTableRecords([$first, $second])
         ->assertSee('Grace Hopper')
+        ->assertTableColumnStateSet('read_at', 'unread', $second)
         ->callTableAction('view', $second)
         ->assertSee('ada@example.com');
 
