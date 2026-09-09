@@ -2,6 +2,8 @@
 
 <div class="filament-hidden">
 
+![Filament Form Builder — build forms in the panel, render them anywhere](https://raw.githubusercontent.com/packstub/filament-form-builder/main/art/banner.jpg)
+
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/packstub/filament-form-builder.svg?style=flat-square)](https://packagist.org/packages/packstub/filament-form-builder)
 [![Tests](https://img.shields.io/github/actions/workflow/status/packstub/filament-form-builder/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/packstub/filament-form-builder/actions/workflows/tests.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/packstub/filament-form-builder.svg?style=flat-square)](https://packagist.org/packages/packstub/filament-form-builder)

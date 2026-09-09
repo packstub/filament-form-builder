@@ -20,7 +20,8 @@ composer lint               # Pint
 - `src/Filament/` `FormResource` (Tabs: Fields / Settings / Embed), `FieldBlocks` (the Builder), `SubmissionsRelationManager`, `SubmissionsCsv`.
 - `src/FormBuilder.php` (+ facade): field type registration, sinks, `find()`, `submit()` from code. `FormBuilderPlugin` registers types and the resource on a panel.
 - `config/packstub-form-builder.php`, `database/migrations/create_form_builder_tables.php.stub`, `resources/lang/en/form-builder.php` (every UI string).
-- `docs/` customer docs, synced to packstub.dev by CI.
+- `docs/` customer docs, synced to packstub.dev by CI (`docs-sync.yml`, needs the `STORE_DEPLOY_KEY` secret).
+- `art/` listing art (`banner.jpg`); the source views live in the store repo under `resources/views/art/form-builder/`, rendered with `php artisan packstub:art:render form-builder.banner`.
 
 ## Conventions
 
