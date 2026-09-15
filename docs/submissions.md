@@ -16,6 +16,10 @@ Every accepted submission is stored (unless the form's **Store submissions** is 
 
 The **Submissions** relation manager on the form's edit page lists them newest first with a summary of the first values, the page and the channel. Opening one shows every value (copyable) and the details, and marks it read. A filter shows unread ones; bulk actions mark as read, export or delete. **Export CSV** downloads the filtered list: the form's current fields first, then any key an older submission still has, then the page, IP and user.
 
+![The Submissions table under a form: unread envelopes, received date, a summary of the values, the page, and the Export CSV action](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/submissions.png)
+
+![A submission opened in a slide-over: every value with its label, copyable, and a collapsed details section](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/submission.png)
+
 The Forms navigation item shows the unread count (`navigationBadge(false)` to hide it).
 
 ## Notifications

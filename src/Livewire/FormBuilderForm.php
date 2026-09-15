@@ -22,8 +22,8 @@ use Packstub\FormBuilder\Submissions\Submitter;
  * <livewire:form-builder form="contact" />
  *
  * The Livewire renderer: the form's fields as Filament components, validated
- * in place, submitted through the same pipeline as the plain renderer. The
- * page needs Filament's frontend assets (@filamentStyles / @filamentScripts).
+ * in place, submitted through the same pipeline as the plain renderer.
+ * Filament's frontend assets reach the page through LivewireAssets.
  */
 class FormBuilderForm extends Component implements HasForms
 {
@@ -111,6 +111,8 @@ class FormBuilderForm extends Component implements HasForms
 
     public function render(): View
     {
+        LivewireAssets::$rendered = true;
+
         return view('packstub-form-builder::livewire.form', [
             'model' => $this->getFormModel(),
         ]);

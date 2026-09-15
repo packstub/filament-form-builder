@@ -2,6 +2,21 @@
 
 All notable changes to `packstub/filament-form-builder` are documented here.
 
+## Unreleased
+
+### Added
+
+- **Livewire renderer**: the page needs nothing but `<livewire:form-builder>`. Filament's colour variables, its scripts and the renderer's stylesheet are injected into the response the way Livewire injects its own script, unless the layout already prints `@filamentStyles` / `@filamentScripts`. The stylesheet is compiled from the Filament component files the built-in field types render (14 KB gzipped against 63 KB for the panel theme, no preflight; the reset the components rely on is scoped to the form) and published by `filament:assets`. Config: `frontend.livewire_assets` (off to handle the frontend yourself) and `frontend.livewire_theme` (the panel theme or your own when custom field types need more). `LivewireAssets::styles()` / `::scripts()` print the same pieces by hand.
+
+### Fixed
+
+- **Blade renderer**: every rule of the inlined stylesheet is scoped under `.fb-form`, so a site rule such as `main p { margin-bottom: 1.5rem }` no longer beats the hint, error and paragraph margins.
+- **Livewire renderer**: the submit button keeps the schema's gap above it on pages that do not also inline the Blade stylesheet.
+
+### Changed
+
+- **Docs**: screenshots of the panel and of the Blade and Livewire renderers in the README and the docs pages, taken in the demo rig.
+
 ## 1.0.0 — 2026-09-09
 
 ### Added

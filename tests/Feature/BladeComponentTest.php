@@ -92,3 +92,12 @@ it('inlines the stylesheet and the script once per page', function (): void {
         ->and(substr_count($html, '<script'))->toBe(1)
         ->and(substr_count($html, '<form '))->toBe(2);
 });
+
+it('scopes every stylesheet rule under .fb-form', function (): void {
+    $css = file_get_contents(__DIR__.'/../../resources/css/form-builder.css');
+    $css = preg_replace('/@media[^{]*\{/', '', $css);
+
+    foreach (array_filter(array_map('trim', explode('}', $css))) as $rule) {
+        expect($rule)->toStartWith('.fb-form');
+    }
+});

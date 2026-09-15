@@ -26,6 +26,8 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `sinks` | `[]` | `SubmissionSink` classes |
 | `frontend.styles` | `true` | Inline the stylesheet with the Blade renderer |
 | `frontend.enhance` | `true` | Inline the fetch script |
+| `frontend.livewire_assets` | `true` | Put Filament's frontend on pages that render the Livewire component |
+| `frontend.livewire_theme` | `null` | Its stylesheet: `null` the compiled one, a path or URL, `false` none |
 | `navigation.group`, `icon`, `sort`, `badge` | — | Navigation of the Forms resource |
 | `gate` | `null` | An ability checked before showing the resource |
 

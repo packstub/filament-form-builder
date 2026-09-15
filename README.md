@@ -50,9 +50,23 @@ A **Forms** resource appears in the navigation.
 
 ## Building a form
 
+**Forms** lists every form with its submission count, the unread ones and whether it is open.
+
+![The Forms resource: submission and unread counts, active state, an Open page action](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/forms-list.png)
+
 Create a form, give it a name, and add fields from the block picker. Each block carries the settings of its type: choices for a dropdown or a checkbox list, a range for numbers and dates, rows for long text, the level of a heading. Keys are derived from labels and kept unique, so values in submissions and exports keep a stable name.
 
+![The Fields tab: one collapsible block per field, the Message block open with its label, key, placeholder, rows, required flag and extra rules](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/builder.png)
+
+![The block picker with the fourteen built-in field types](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/field-picker.png)
+
 The **Settings** tab holds the submit button label, the success message or a redirect URL, notification addresses, whether submissions are stored, an opening and closing date, a login requirement and the spam settings. The **Embed** tab shows the snippets for the form you are editing.
+
+![The Settings tab: general, after submit, notifications, availability and spam protection sections](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/settings.png)
+
+![The Embed tab: the Blade tag, the Livewire tag, the hosted page URL and the JSON endpoints, each copyable](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/embed.png)
+
+Read more: [Building forms](https://packstub.dev/docs/filament-form-builder/building-forms).
 
 ## Rendering a form
 
@@ -68,18 +82,23 @@ The component works on pages without a session: errors and old input travel in a
 
 Options: `:enhance="false"` for a plain POST only, `:styles="false"` when your site ships its own CSS, `action` and `return` to override the endpoint and the page to come back to.
 
+![The Contact form rendered by the Blade component on a marketing page, half-width fields side by side](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/site-blade.png)
+
+![The same form after a submit with a too-short message: the errors shown in place under their fields](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/site-blade-errors.png)
+
 ### Livewire
 
 ```blade
 <livewire:form-builder form="contact" />
 ```
 
-The fields as Filament components, validated in place. The page needs Filament's frontend assets:
+The fields as Filament components, validated in place. Nothing else to add to the page: the component brings Filament's frontend with it, the way Livewire brings its own script. Its stylesheet is a compiled pick of the Filament components the built-in field types use (14 KB gzipped, against 63 KB for the panel theme), published by `php artisan filament:assets` next to the other Filament assets. It carries no reset, so the host page keeps its own styles. A layout that already prints `@filamentStyles` and `@filamentScripts` is left alone.
 
-```blade
-@filamentStyles
-@filamentScripts
-```
+Custom field types that render other Filament components (a toggle, a tags input) need their CSS: point `frontend.livewire_theme` at the panel theme `filament:assets` publishes (`css/filament/filament/app.css`) or at a theme of your own, and every component is covered.
+
+![A registration form rendered by the Livewire component: headings, radio buttons, a checkbox list, a date picker and a terms checkbox](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/site-livewire.png)
+
+Read more: [Rendering](https://packstub.dev/docs/filament-form-builder/rendering).
 
 ### JSON
 
@@ -94,9 +113,15 @@ The definition lists the fields with their type, rules and choices, plus a fresh
 
 Every form is also served on its own at `/forms/{slug}` (switch off with `routes.page`, change the layout with `routes.page_layout`).
 
+![The hosted page of a form: name, description and the form in the package layout](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/hosted-page.png)
+
 ## Submissions
 
 Submissions live under the form as a relation manager: the date, a summary of the first values, the page they came from and the channel (web, json, livewire, code). Opening one shows every value and the details, and marks it read. Bulk actions mark as read, export or delete. The CSV export lists the form's current fields, then any key an older submission still carries.
+
+![The Submissions table under a form: unread envelopes, received date, a summary of the values, the page, and the Export CSV action](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/submissions.png)
+
+![A submission opened in a slide-over: every value with its label, copyable, and a collapsed details section](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/submission.png)
 
 ```php
 use Packstub\FormBuilder\Models\FormSubmission;
@@ -105,6 +130,8 @@ FormSubmission::query()->unread()->count();
 $submission->value('email');
 $submission->formatted(); // ['email' => ['label' => 'Email', 'value' => 'ada@example.com'], ...]
 ```
+
+Read more: [Submissions](https://packstub.dev/docs/filament-form-builder/submissions).
 
 ## Notifications and sinks
 
