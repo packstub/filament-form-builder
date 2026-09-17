@@ -30,6 +30,8 @@ public function panel(Panel $panel): Panel
 
 No other package is required. The CSV export, the email notification and the spam protection are built in.
 
+The Livewire renderer's stylesheet is a Filament asset: `php artisan filament:assets` publishes it (the `filament:upgrade` script Filament adds to `composer.json` runs that on every update).
+
 ## Routes
 
 The package registers, under `routes.prefix` (`forms`):

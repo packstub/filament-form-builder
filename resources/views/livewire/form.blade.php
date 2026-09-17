@@ -7,7 +7,7 @@
         <form wire:submit="submit">
             {{ $this->form }}
 
-            <div class="fb-actions">
+            <div class="fb-actions" style="margin-top: 1.5rem">
                 <x-filament::button type="submit" wire:loading.attr="disabled">
                     {{ $model->submitLabel() }}
                 </x-filament::button>

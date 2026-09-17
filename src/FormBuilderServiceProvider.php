@@ -2,6 +2,9 @@
 
 namespace Packstub\FormBuilder;
 
+use Filament\Support\Assets\Css;
+use Filament\Support\Facades\FilamentAsset;
+use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +17,7 @@ use Packstub\FormBuilder\Http\Controllers\SubmitFormController;
 use Packstub\FormBuilder\Listeners\DispatchToSinks;
 use Packstub\FormBuilder\Listeners\SendSubmissionNotifications;
 use Packstub\FormBuilder\Livewire\FormBuilderForm;
+use Packstub\FormBuilder\Livewire\LivewireAssets;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -55,6 +59,14 @@ class FormBuilderServiceProvider extends PackageServiceProvider
 
         Blade::componentNamespace('Packstub\\FormBuilder\\View\\Components', 'form-builder');
         Livewire::component('form-builder', FormBuilderForm::class);
+
+        // The Livewire renderer's stylesheet: published by `filament:assets`,
+        // linked by LivewireAssets on the pages that need it, never by panels.
+        FilamentAsset::register([
+            Css::make(LivewireAssets::STYLESHEET, __DIR__.'/../resources/dist/livewire.css')->loadedOnRequest(),
+        ], LivewireAssets::PACKAGE);
+
+        Event::listen(RequestHandled::class, [LivewireAssets::class, 'inject']);
 
         $this->publishes([
             __DIR__.'/../resources/css/form-builder.css' => public_path('vendor/packstub-form-builder/form-builder.css'),

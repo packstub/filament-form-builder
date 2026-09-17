@@ -16,7 +16,7 @@ composer lint               # Pint
 - `src/Submissions/` the pipeline: `Submitter` (availability → spam → validation → store → events), `SpamGuard` + `ProtectionToken` (honeypot, time trap), `SubmissionContext`, `SubmissionResult`.
 - `src/Http/` `SubmitFormController` (HTML redirect back or JSON), `FormDefinitionController`, `ShowFormController` (hosted page), `FormState` (success / errors / old input from the session or the `fb_success` / `fb_state` query params).
 - `src/View/Components/Form.php` + `resources/views/components/form.blade.php` + `resources/views/fields/*` the Blade renderer; `resources/css/form-builder.css` and `resources/js/form-builder.js` are inlined once per page.
-- `src/Livewire/FormBuilderForm.php` the Livewire renderer (`<livewire:form-builder>`).
+- `src/Livewire/FormBuilderForm.php` the Livewire renderer (`<livewire:form-builder>`); `src/Livewire/LivewireAssets.php` injects Filament's frontend into the response (like Livewire does its script) and links `resources/dist/livewire.css`, compiled by `npm run build` from `resources/css/livewire.css`, a pick of Filament's component source files (rebuild after a Filament update; `LivewireStylesheetTest` guards the pick).
 - `src/Filament/` `FormResource` (Tabs: Fields / Settings / Embed), `FieldBlocks` (the Builder), `SubmissionsRelationManager`, `SubmissionsCsv`.
 - `src/FormBuilder.php` (+ facade): field type registration, sinks, `find()`, `submit()` from code. `FormBuilderPlugin` registers types and the resource on a panel.
 - `config/packstub-form-builder.php`, `database/migrations/create_form_builder_tables.php.stub`, `resources/lang/en/form-builder.php` (every UI string).
@@ -27,5 +27,5 @@ composer lint               # Pint
 
 - Every change needs a test and a `CHANGELOG.md` line.
 - No hard dependency beyond Filament and `spatie/laravel-package-tools`; anything optional is detected, never required.
-- The Blade renderer must keep working without a session and without JavaScript; the Livewire renderer needs Filament's frontend assets on the page.
+- The Blade renderer must keep working without a session and without JavaScript; the Livewire renderer brings Filament's frontend assets itself and must never reset the host page's styles.
 - Migrations are additive: a schema change lands in `create_*` and in a guarded `add_*` migration; never rename or drop a column inside a major.

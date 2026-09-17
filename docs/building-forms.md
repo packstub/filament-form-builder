@@ -2,7 +2,13 @@
 
 Open **Forms**, create one, and add fields from the block picker on the **Fields** tab. Blocks can be reordered, collapsed, cloned and deleted.
 
+![The Forms resource: submission and unread counts, active state, an Open page action](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/forms-list.png)
+
+![The Fields tab: one collapsible block per field, the Message block open with its settings](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/builder.png)
+
 ## Field types
+
+![The block picker with the fourteen built-in field types](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/field-picker.png)
 
 | Type | Value | Own settings |
 | --- | --- | --- |
@@ -27,6 +33,8 @@ Keys must be unique within a form; the builder refuses duplicates and the model 
 
 ## Settings
 
+![The Settings tab: general, after submit, notifications, availability and spam protection sections](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/settings.png)
+
 | Setting | What it does |
 | --- | --- |
 | Name, slug | The slug is the form's URL and embed name |
@@ -43,3 +51,5 @@ Keys must be unique within a form; the builder refuses duplicates and the model 
 ## Embed
 
 The **Embed** tab shows, for the form being edited, the Blade tag, the Livewire tag, the hosted page URL and the JSON endpoints, each copyable.
+
+![The Embed tab with the four copyable snippets](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/embed.png)

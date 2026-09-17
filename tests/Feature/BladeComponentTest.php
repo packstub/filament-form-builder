@@ -92,3 +92,22 @@ it('inlines the stylesheet and the script once per page', function (): void {
         ->and(substr_count($html, '<script'))->toBe(1)
         ->and(substr_count($html, '<form '))->toBe(2);
 });
+
+it('scopes every stylesheet rule under .fb-form', function (): void {
+    $css = file_get_contents(__DIR__.'/../../resources/css/form-builder.css');
+
+    // Strip comments and string literals before matching braces, then unwrap at-rule blocks.
+    $css = preg_replace('~/\*.*?\*/~s', '', $css);
+    $css = preg_replace('~"(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'~', '""', $css);
+    $css = preg_replace('~@(media|supports|layer|container)[^{]*\{~', '', $css);
+
+    preg_match_all('~([^{}]+)\{[^{}]*\}~', $css, $rules);
+
+    expect($rules[1])->not->toBeEmpty();
+
+    foreach ($rules[1] as $selectorList) {
+        foreach (explode(',', $selectorList) as $selector) {
+            expect(trim($selector))->toMatch('/^\.fb-form(?![\w-])/');
+        }
+    }
+});

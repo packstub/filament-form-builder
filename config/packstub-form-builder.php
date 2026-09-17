@@ -144,16 +144,29 @@ return [
     | Frontend
     |--------------------------------------------------------------------------
     |
-    | "styles" inlines the package stylesheet with the first rendered form;
-    | turn it off when your site ships its own. "enhance" adds a small
-    | script that submits the form with fetch and renders errors and the
-    | success message in place (the plain POST still works without it).
+    | Blade renderer: "styles" inlines the package stylesheet with the first
+    | rendered form; turn it off when your site ships its own. "enhance"
+    | adds a small script that submits the form with fetch and renders
+    | errors and the success message in place (the plain POST still works
+    | without it).
+    |
+    | Livewire renderer: "livewire_assets" puts Filament's colour variables,
+    | scripts and the renderer's stylesheet on any page that renders
+    | <livewire:form-builder> and does not print @filamentStyles /
+    | @filamentScripts itself. "livewire_theme" is that stylesheet: null for
+    | the package's compiled one (the Filament components the built-in
+    | field types use, published by `filament:assets`), a path or URL for
+    | another (say "css/filament/filament/app.css", the panel theme, when
+    | custom field types render components the compiled one lacks), or
+    | false to link none.
     |
     */
 
     'frontend' => [
         'styles' => true,
         'enhance' => true,
+        'livewire_assets' => true,
+        'livewire_theme' => null,
     ],
 
     /*
