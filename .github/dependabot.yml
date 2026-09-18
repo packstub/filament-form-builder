@@ -13,3 +13,20 @@ updates:
       actions:
         patterns:
           - "*"
+
+  # Tailwind CLI for the Livewire renderer's stylesheet (package-lock.json); the built output lives in resources/dist.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+    groups:
+      javascript:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
