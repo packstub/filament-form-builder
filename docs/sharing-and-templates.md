@@ -4,9 +4,22 @@
 
 **Share** on a form (list and edit page) opens the public link with copy and open, the availability window (**Opens at** / **Closes at**, saved from the dialog) and the iframe snippet.
 
-A **private** form (Settings › Access › Visibility) is not served at `/forms/{slug}`, nor by the definition endpoint: only a **share link** opens it, a signed URL the dialog generates, valid until the date you pick or without expiry. Anyone with the link can open the form while it is published and within its window; change the visibility back to public to drop the links, or set a closing date.
+A **private** form (Settings › Access › Visibility) is not served at `/forms/{slug}`, nor by the definition endpoint: only its **share links** open it. **Share** on a private form creates one, with a label ("Sent to the Acme team"), an optional expiry and an optional maximum number of submissions. Each link is a short address, `/f/{token}` (`routes.share_prefix`), and works in an iframe with `?embed=1`.
 
-From code: `$form->shareUrl()` and `$form->shareUrl(now()->addDays(7))`.
+Every link is listed under **Share links** on the form's page with its address (click to copy), expiry, submissions and status, where **New link** adds one and **Revoke** closes one without touching the others. A revoked, expired or full link answers with "This link is no longer valid." (or the form's full message), and so does a submission posted through it. Submissions record the link they came through: a **Share link** column and filter in the submissions table, `share_link_id` in the webhook's `meta`.
+
+From code:
+
+```php
+$link = $form->shareLinks()->create(['label' => 'Acme', 'expires_at' => now()->addWeek(), 'max_submissions' => 20]);
+$link->url();      // https://example.com/f/k3v…
+$link->revoke();
+$link->status();   // active, expired, revoked or full
+```
+
+A headless client reads a private form's definition with `?link={token}` and posts the token back as `_fb_link`.
+
+The signed links of 1.2 (`$form->shareUrl()`, `$form->shareUrl(now()->addDays(7))`) keep working throughout 1.x.
 
 ## Password
 

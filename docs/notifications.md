@@ -22,6 +22,22 @@ Turn on **Send a confirmation to the visitor**, pick the email field (or let the
 
 Pick users under **Notify in the panel** and each gets a Filament database notification with a *View* link for every submission. The app needs Filament's [database notifications](https://filamentphp.com/docs/notifications/database-notifications) set up (the `notifications` table and the panel's `databaseNotifications()`).
 
+## Chat channels
+
+Add channels under **Chat channels** and every submission posts a message to each: the form, the submission number, the first ten values and a button to the submission in the panel.
+
+| App | URL to paste |
+| --- | --- |
+| Slack | An [incoming webhook](https://api.slack.com/messaging/webhooks) URL (`https://hooks.slack.com/services/…`) |
+| Discord | A channel webhook URL (Channel settings › Integrations › Webhooks) |
+| Microsoft Teams | A workflow's *When a Teams webhook request is received* URL; the message is an Adaptive Card |
+
+Messages go through the same queue, retries and log as the webhook (**Deliveries** on the form's page, with the app in the *Sent to* column).
+
+## Branding
+
+With a **Logo** and a **Brand colour** on the Design tab, both emails carry the logo in the header and the colour on the button and the links, on top of the app's mail theme. Without them the emails look as before. Publish the views (`packstub-form-builder-views`) to change the layout further.
+
 ## Webhook
 
 Set a **Webhook URL** and every submission is posted there as JSON:
@@ -50,7 +66,7 @@ Set a **Webhook URL** and every submission is posted there as JSON:
 | Include the visitor details | The `meta` block |
 | Extra headers | Sent with every request |
 
-Deliveries are queued (`webhooks.queue`), retried with a growing delay (1, 5, 25 minutes…) up to `webhooks.attempts` times, and listed under **Webhook deliveries** on the form's page with their status, attempts and response, where a failed one can be retried. `form-builder:prune` drops deliveries older than `webhooks.keep_days`.
+Deliveries are queued (`webhooks.queue`), retried with a growing delay (1, 5, 25 minutes…) up to `webhooks.attempts` times, and listed under **Deliveries** on the form's page with their status, attempts and response, where a failed one can be retried. `form-builder:prune` drops deliveries older than `webhooks.keep_days`.
 
 Make, n8n, Zapier's *Webhooks by Zapier* and any endpoint of your own take this payload as is.
 

@@ -2,6 +2,27 @@
 
 All notable changes to `packstub/filament-form-builder` are documented here.
 
+## Unreleased
+
+Upgrading: run `php artisan vendor:publish --tag=packstub-form-builder-migrations` and `php artisan migrate` (a guarded migration adds the share links table, the link on submissions and the owner of a form). Share links answer at `/f/{token}`: exclude `f` from a catch-all route, or change `routes.share_prefix`. Signed share links from 1.2 keep working. Nothing else changes for existing forms.
+
+### Added
+
+- **Choices from your data** (#5): a dropdown, multi-select, radio, toggle buttons or checkbox list takes its options from a source registered with `FormBuilder::choices($name, $source)` (a closure, an array or a `ChoiceSource` class; config `choice_sources` too), picked under **Options** in the builder. Resolved when the form renders and again on submit; the key is stored and the label shown.
+- **Address field** (#6): street (two lines), city, region, postal code and country in plain inputs with browser autocomplete, stored as one object; the parts to show and the ones a required address needs; one line in tables and emails, a column per part in exports; used by the catering order and patient intake templates.
+- **Chat channels** (#7): a message per submission to Slack, Discord or Microsoft Teams through an incoming webhook URL, queued, retried and logged with the webhook deliveries.
+- **Branded emails** (#8): the form's logo and brand colour (Design tab) on the team email and the visitor's confirmation.
+- **Share links** (#9): a private form's Share action creates a stored link at `/f/{token}` with a label, an optional expiry and submission cap; a **Share links** list on the form to copy, add and revoke them one by one; submissions record their link (a column, a filter, `share_link_id` in the webhook meta); `?link=` on the definition endpoint and `_fb_link` on submit for headless clients.
+- **Submissions per day** (#10): a chart on the form's edit page over 7, 30 or 90 days, with the totals.
+- **Ownership** (#11): forms record who created them (a **Created by** column, a **My forms** filter); `ownership.only_own` shows each user only their forms, `ownership.see_all` names the ability that still sees every one.
+- **Testing helpers** (#12): `FormBuilder::fake()` records submissions and spam and skips emails, notifications, webhooks, channel messages and sinks; `assertSubmitted()`, `assertNotSubmitted()`, `assertSubmittedCount()`, `assertNothingSubmitted()`, `assertSpamDetected()`; `FormBuilder::validInput()` for test posts.
+- **Field type hooks**: `nestedRules()`, `nestedAttributes()`, `exportColumns()`, `exportValue()`, `definition()`.
+
+### Changed
+
+- The webhook log on a form is now **Deliveries**, with a *Sent to* column (the webhook or a chat app).
+- A validation error on a part of a value (`address.city`, `tags.0`) shows on its field in the Blade renderer.
+
 ## 1.2.0 — 2026-09-25
 
 Upgrading: run `php artisan vendor:publish --tag=packstub-form-builder-migrations` and `php artisan migrate` (a guarded migration adds the submission number and fingerprint, the tenant column and the webhook deliveries table), then `php artisan filament:assets` (the Livewire stylesheet grew from 14 to 24 KB gzipped to cover the new components). `SubmissionsCsv` is now `SubmissionsExport` (same `download()` / `write()` signature). Nothing else changes for existing forms.

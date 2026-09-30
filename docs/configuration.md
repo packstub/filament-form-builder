@@ -6,9 +6,10 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 
 | Key | Default | What it does |
 | --- | --- | --- |
-| `tables.forms`, `tables.submissions`, `tables.webhook_deliveries` | `form_builder_*` | Table names (set before migrating) |
-| `models.form`, `models.submission`, `models.webhook_delivery` | package models | Model classes |
+| `tables.forms`, `tables.submissions`, `tables.webhook_deliveries`, `tables.share_links` | `form_builder_*` | Table names (set before migrating) |
+| `models.form`, `models.submission`, `models.webhook_delivery`, `models.share_link` | package models | Model classes |
 | `field_types` | the built-ins | Field types offered in the builder |
+| `choice_sources` | `[]` | Named choice lists: `ChoiceSource` classes or `value => label` arrays (closures go through `FormBuilder::choices()`) |
 | `routes.enabled` | `true` | Register the routes at all |
 | `routes.prefix` | `forms` | URL prefix |
 | `routes.middleware` | `['web']` | Middleware of the submit, validate, unlock and definition routes |
@@ -16,6 +17,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `routes.page_middleware` | `['web']` | Its middleware |
 | `routes.page_layout` | `packstub-form-builder::layout` | Its layout component |
 | `routes.embed` | `true` | The embed script route |
+| `routes.share_prefix` | `f` | Where share links live (`/f/{token}`); `null` turns them off |
 | `submissions.throttle` | `10,1` | Rate limit per IP; `null` disables |
 | `submissions.store_ip` | `true` | Record the IP |
 | `submissions.store_user_agent` | `true` | Record the user agent |
@@ -49,6 +51,8 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `frontend.livewire_theme` | `null` | Its stylesheet: `null` the compiled one, a path or URL, `false` none |
 | `tenancy.enabled` | `false` | Scope forms to a tenant |
 | `tenancy.column`, `model`, `resolver` | `tenant_id`, `null`, `null` | The column, the tenant model, a callable returning the current tenant (Filament's by default) |
+| `ownership.only_own` | `false` | Show each user only the forms they created |
+| `ownership.see_all` | `null` | A gate ability whose users still see every form |
 | `navigation.group`, `icon`, `sort`, `badge` | — | Navigation of the Forms resource |
 | `gate` | `null` | An ability checked before showing the resource |
 

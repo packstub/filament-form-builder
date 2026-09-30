@@ -35,6 +35,7 @@ Open **Forms**, create one, and add fields from the block picker on the **Fields
 | File upload | list of stored paths | Several files, maximum count, accepted types, maximum size |
 | Colour | `#rrggbb` | — |
 | Country | ISO 3166-1 alpha-2 code | A list of codes to offer (empty: every country) |
+| Address | `{line1, line2, city, region, postal_code, country}` | The parts to show, the parts a required address needs, the countries to offer |
 | Consent | true / false | Link text and URL shown after the label |
 | Hidden | string | Value |
 | Heading | — | Level (H2–H4) |
@@ -45,7 +46,22 @@ Every input field also has a label, a **key** (derived from the label; the name 
 
 **Hidden** keeps a field in the design without showing or validating it; old values still appear in exports and columns.
 
+**Address** asks for a street (two lines), city, state or region, postal code and country in plain inputs with the browser's address autocomplete, and stores them as one object. The table and the emails show it on one line; the CSV and Excel exports give each part its own column.
+
 Keys must be unique within a form; the builder refuses duplicates and the model suffixes a missing one.
+
+### Choices from your data
+
+A dropdown, multi-select, radio, toggle buttons or checkbox list can take its choices from your own data instead of a typed list. Register a source in a service provider and pick it under **Options** on the field:
+
+```php
+use App\Models\Course;
+use Packstub\FormBuilder\Facades\FormBuilder;
+
+FormBuilder::choices('courses', fn () => Course::query()->orderBy('name')->pluck('name', 'id'), 'Courses');
+```
+
+A source is a closure (it receives the `Field`), a `value => label` array, or a class implementing `Packstub\FormBuilder\Contracts\ChoiceSource` (also accepted in config `choice_sources`). It runs when the form renders and again on submit, so validation uses the live list, and inside the current tenant, so tenant-scoped queries just work. The key is stored; tables, emails and exports show the label, and the key once the record is gone.
 
 ## Validation
 
