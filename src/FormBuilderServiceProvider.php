@@ -11,17 +11,20 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Packstub\FormBuilder\Commands\PruneCommand;
 use Packstub\FormBuilder\Events\SubmissionReceived;
+use Packstub\FormBuilder\Fields\ChoiceSources;
 use Packstub\FormBuilder\Fields\FieldTypeRegistry;
 use Packstub\FormBuilder\Http\Controllers\DownloadFileController;
 use Packstub\FormBuilder\Http\Controllers\EmbedScriptController;
 use Packstub\FormBuilder\Http\Controllers\FormDefinitionController;
 use Packstub\FormBuilder\Http\Controllers\ShowFormController;
+use Packstub\FormBuilder\Http\Controllers\ShowShareLinkController;
 use Packstub\FormBuilder\Http\Controllers\SubmitFormController;
 use Packstub\FormBuilder\Http\Controllers\UnlockFormController;
 use Packstub\FormBuilder\Http\Controllers\ValidateFormController;
 use Packstub\FormBuilder\Listeners\DispatchToSinks;
 use Packstub\FormBuilder\Listeners\DispatchWebhook;
 use Packstub\FormBuilder\Listeners\SendAutoresponder;
+use Packstub\FormBuilder\Listeners\SendChannelMessages;
 use Packstub\FormBuilder\Listeners\SendPanelNotifications;
 use Packstub\FormBuilder\Listeners\SendSubmissionNotifications;
 use Packstub\FormBuilder\Livewire\FormBuilderForm;
@@ -44,7 +47,7 @@ class FormBuilderServiceProvider extends PackageServiceProvider
             ->hasViews(static::$name)
             ->hasTranslations()
             ->hasCommand(PruneCommand::class)
-            ->hasMigrations(['create_form_builder_tables', 'add_logic_and_webhooks_to_form_builder_tables'])
+            ->hasMigrations(['create_form_builder_tables', 'add_logic_and_webhooks_to_form_builder_tables', 'add_share_links_and_owner_to_form_builder_tables'])
             ->hasInstallCommand(function (InstallCommand $command): void {
                 $command
                     ->publishConfigFile()
@@ -60,6 +63,10 @@ class FormBuilderServiceProvider extends PackageServiceProvider
             return (new FieldTypeRegistry)->register(config('packstub-form-builder.field_types', []));
         });
 
+        $this->app->singleton(ChoiceSources::class, function (): ChoiceSources {
+            return (new ChoiceSources)->register((array) config('packstub-form-builder.choice_sources', []));
+        });
+
         $this->app->singleton(FormBuilder::class);
     }
 
@@ -69,6 +76,7 @@ class FormBuilderServiceProvider extends PackageServiceProvider
         Event::listen(SubmissionReceived::class, SendAutoresponder::class);
         Event::listen(SubmissionReceived::class, SendPanelNotifications::class);
         Event::listen(SubmissionReceived::class, DispatchWebhook::class);
+        Event::listen(SubmissionReceived::class, SendChannelMessages::class);
         Event::listen(SubmissionReceived::class, DispatchToSinks::class);
 
         FormBuilder::submissionModel()::deleting(fn (FormSubmission $submission) => Uploads::deleteFor($submission));
@@ -134,5 +142,14 @@ class FormBuilderServiceProvider extends PackageServiceProvider
                     ->name('show');
             }
         });
+
+        $share = trim((string) config('packstub-form-builder.routes.share_prefix', 'f'), '/');
+
+        if ($share !== '' && config('packstub-form-builder.routes.page', true)) {
+            Route::get($share.'/{token}', ShowShareLinkController::class)
+                ->middleware((array) config('packstub-form-builder.routes.page_middleware', ['web']))
+                ->where('token', '[A-Za-z0-9]+')
+                ->name('packstub-form-builder.share');
+        }
     }
 }

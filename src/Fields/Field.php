@@ -228,6 +228,25 @@ final class Field
     }
 
     /**
+     * The rules of the value's parts, keyed "key.part" (see
+     * FieldType::nestedRules()).
+     *
+     * @param  array<string, mixed>|null  $values
+     * @return array<string, array<int, mixed>>
+     */
+    public function nestedRules(?array $values = null): array
+    {
+        $required = $values === null ? $this->required : $this->isRequiredFor($values);
+        $rules = [];
+
+        foreach ($this->type->nestedRules($this, $required) as $part => $partRules) {
+            $rules[$this->key.'.'.$part] = $partRules;
+        }
+
+        return $rules;
+    }
+
+    /**
      * The rules picked from the list, as Laravel rules.
      *
      * @return array<int, mixed>
@@ -314,6 +333,7 @@ final class Field
             'section' => $this->section,
             'visibility' => $this->visibility()->isAlways() ? null : $this->visibility()->toArray(),
             'requirement' => $this->required && ! $this->requirement()->isAlways() ? $this->requirement()->toArray() : null,
+            ...$this->type->definition($this),
         ];
     }
 

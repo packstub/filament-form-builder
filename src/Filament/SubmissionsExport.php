@@ -58,10 +58,28 @@ class SubmissionsExport
             }
         }
 
-        $labels = array_map(fn (string $key): string => $form->allInputFields()->get($key)?->label ?? $key, $keys);
-        $header = ['number', 'id', 'submitted_at', ...$labels, 'source_url', 'ip', 'user_id'];
+        // A field whose type splits its value (an address) gets one column per part.
+        $fields = $form->allInputFields();
+        $columns = [];
 
-        $rows = (function () use ($records, $keys): \Generator {
+        foreach ($keys as $key) {
+            $field = $fields->get($key);
+            $parts = $field === null ? [] : $field->type->exportColumns($field);
+
+            if ($parts === []) {
+                $columns[] = ['key' => $key, 'part' => null, 'label' => $field?->label ?? $key];
+
+                continue;
+            }
+
+            foreach ($parts as $part => $label) {
+                $columns[] = ['key' => $key, 'part' => $part, 'label' => $label];
+            }
+        }
+
+        $header = ['number', 'id', 'submitted_at', ...array_column($columns, 'label'), 'source_url', 'ip', 'user_id'];
+
+        $rows = (function () use ($records, $columns, $fields): \Generator {
             foreach ($records as $record) {
                 $formatted = $record->formatted();
 
@@ -69,7 +87,9 @@ class SubmissionsExport
                     $record->number,
                     $record->getKey(),
                     $record->created_at?->toDateTimeString(),
-                    ...array_map(fn (string $key): string => $formatted[$key]['value'] ?? '', $keys),
+                    ...array_map(fn (array $column): string => $column['part'] === null
+                        ? ($formatted[$column['key']]['value'] ?? '')
+                        : $fields->get($column['key'])->type->exportValue($record->value($column['key']), $fields->get($column['key']), $column['part']), $columns),
                     $record->source_url,
                     $record->ip,
                     $record->user_id,

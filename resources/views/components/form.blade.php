@@ -53,6 +53,9 @@
             @if ($passwordKey)
                 <input type="hidden" name="_fb_key" value="{{ $passwordKey }}">
             @endif
+            @if ($link)
+                <input type="hidden" name="_fb_link" value="{{ $link }}">
+            @endif
             @if ($honeypotField)
                 <div class="fb-hp" aria-hidden="true">
                     <label for="{{ $formId }}-hp">{{ $strings['honeypot_label'] }}</label>

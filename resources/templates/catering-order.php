@@ -65,10 +65,11 @@ return [
                 ],
             ],
             [
-                'type' => 'textarea',
+                'type' => 'address',
                 'data' => [
                     'label' => 'Delivery address',
-                    'rows' => 2,
+                    'parts' => ['line1', 'line2', 'city', 'postal_code'],
+                    'required_parts' => ['line1', 'city', 'postal_code'],
                     'required' => true,
                 ],
             ],

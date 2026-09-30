@@ -142,7 +142,7 @@ class SpamGuard
         return [
             $this->honeypotField(),
             $this->tokens->field(),
-            '_fb_return', '_fb_key', '_fb_step', '_fb_fields', '_token', '_method',
+            '_fb_return', '_fb_key', '_fb_link', '_fb_step', '_fb_fields', '_token', '_method',
             'cf-turnstile-response', 'h-captcha-response', 'g-recaptcha-response', '_fb_captcha',
         ];
     }

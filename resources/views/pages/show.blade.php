@@ -9,5 +9,5 @@
         @endif
     @endif
 
-    <x-form-builder::form :form="$form" />
+    <x-form-builder::form :form="$form" :link="($shareLink ?? null)?->token" />
 </x-dynamic-component>

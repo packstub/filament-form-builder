@@ -32,24 +32,28 @@ class DeliverWebhook implements ShouldQueue
             return;
         }
 
-        $form = $delivery->form;
-        $webhook = $form === null ? null : Webhook::for($form);
-
-        if ($webhook === null) {
-            $delivery->forceFill(['status' => WebhookDelivery::FAILED, 'error' => 'The form has no webhook URL any more.'])->save();
-
-            return;
-        }
-
         $body = json_encode($delivery->payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-        $id = 'msg_'.Str::ulid();
-        $timestamp = time();
-        $headers = [
-            ...$webhook->headers,
-            ...$webhook->signatureHeaders($id, $timestamp, $body),
-            'Content-Type' => 'application/json',
-            'User-Agent' => 'Packstub-Form-Builder/1.0',
-        ];
+        $headers = ['Content-Type' => 'application/json', 'User-Agent' => 'Packstub-Form-Builder/1.0'];
+
+        if ($delivery->isChannelMessage()) {
+            // A chat channel's incoming webhook: a plain POST to the URL it was sent to.
+            $method = 'POST';
+            $url = $delivery->url;
+        } else {
+            $form = $delivery->form;
+            $webhook = $form === null ? null : Webhook::for($form);
+
+            if ($webhook === null) {
+                $delivery->forceFill(['status' => WebhookDelivery::FAILED, 'error' => 'The form has no webhook URL any more.'])->save();
+
+                return;
+            }
+
+            $id = 'msg_'.Str::ulid();
+            $headers = [...$webhook->headers, ...$webhook->signatureHeaders($id, time(), $body), ...$headers];
+            $method = $webhook->method;
+            $url = $webhook->url;
+        }
 
         $delivery->attempts++;
 
@@ -58,7 +62,7 @@ class DeliverWebhook implements ShouldQueue
                 ->timeout((int) config('packstub-form-builder.webhooks.timeout', 15))
                 ->withOptions(['verify' => (bool) config('packstub-form-builder.webhooks.verify_ssl', true)])
                 ->withBody($body, 'application/json')
-                ->send($webhook->method, $webhook->url);
+                ->send($method, $url);
 
             $delivery->response_status = $response->status();
             $delivery->response_body = Str::limit($response->body(), 2000, '…');

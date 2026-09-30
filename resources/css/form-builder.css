@@ -33,6 +33,10 @@
 .fb-form .fb-fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:.375rem;min-width:0}
 .fb-form .fb-fieldset legend{padding:0;margin-bottom:.375rem}
 .fb-form .fb-choices{display:flex;flex-direction:column;gap:.5rem}
+.fb-form .fb-address__parts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem 1rem}
+.fb-form .fb-address__part{display:flex;flex-direction:column;gap:.25rem;min-width:0;grid-column:span 2}
+@media (min-width:640px){.fb-form .fb-address__part--city,.fb-form .fb-address__part--region,.fb-form .fb-address__part--postal-code,.fb-form .fb-address__part--country{grid-column:span 1}}
+.fb-form .fb-sublabel{font-size:.875rem;color:var(--_muted)}
 .fb-form .fb-choice{display:flex;align-items:flex-start;gap:.5rem;cursor:pointer;line-height:1.4}
 .fb-form .fb-choice input{margin:.2rem 0 0;accent-color:var(--_primary);flex:none;width:1rem;height:1rem}
 .fb-form .fb-link{color:var(--_primary);text-decoration:underline}

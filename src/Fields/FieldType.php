@@ -51,13 +51,20 @@ abstract class FieldType
     }
 
     /**
-     * The value => label choices of a field of this type (the ones stored in
-     * the builder by default; a type may compute them).
+     * The value => label choices of a field of this type: the choice source
+     * picked in the builder, else the list typed there (a type may compute
+     * them).
      *
      * @return array<string, string>
      */
     public function choices(Field $field): array
     {
+        $source = $field->option('choices_source');
+
+        if (is_string($source) && $source !== '') {
+            return app(ChoiceSources::class)->resolve($source, $field);
+        }
+
         return $field->storedChoices();
     }
 
@@ -144,6 +151,58 @@ abstract class FieldType
      * @return array<int, mixed>
      */
     public function elementRules(Field $field): array
+    {
+        return [];
+    }
+
+    /**
+     * Rules for the parts of a value stored as an object (an address), keyed
+     * by part: validated as "key.part". $required is the field's resolved
+     * requirement.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    public function nestedRules(Field $field, bool $required): array
+    {
+        return [];
+    }
+
+    /**
+     * The names validation messages use for the parts, keyed by part.
+     *
+     * @return array<string, string>
+     */
+    public function nestedAttributes(Field $field): array
+    {
+        return [];
+    }
+
+    /**
+     * The columns the exports split the value into, part => heading; empty
+     * for one column.
+     *
+     * @return array<string, string>
+     */
+    public function exportColumns(Field $field): array
+    {
+        return [];
+    }
+
+    /**
+     * One export column of a split value (see exportColumns()).
+     */
+    public function exportValue(mixed $value, Field $field, string $column): string
+    {
+        return '';
+    }
+
+    /**
+     * Extra keys for the field in the JSON definition (the embed and headless
+     * clients read them).
+     *
+     * @return array<string, mixed>
+     */
+    public function definition(Field $field): array
     {
         return [];
     }

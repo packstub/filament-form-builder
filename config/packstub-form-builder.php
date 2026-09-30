@@ -3,6 +3,7 @@
 use Packstub\FormBuilder\Fields\Types;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\FormSubmission;
+use Packstub\FormBuilder\Models\ShareLink;
 use Packstub\FormBuilder\Models\WebhookDelivery;
 
 return [
@@ -21,6 +22,7 @@ return [
         'forms' => 'form_builder_forms',
         'submissions' => 'form_builder_submissions',
         'webhook_deliveries' => 'form_builder_webhook_deliveries',
+        'share_links' => 'form_builder_share_links',
     ],
 
     /*
@@ -37,6 +39,7 @@ return [
         'form' => Form::class,
         'submission' => FormSubmission::class,
         'webhook_delivery' => WebhookDelivery::class,
+        'share_link' => ShareLink::class,
     ],
 
     /*
@@ -75,12 +78,28 @@ return [
         Types\FileField::class,
         Types\ColorField::class,
         Types\CountryField::class,
+        Types\AddressField::class,
         Types\ConsentField::class,
         Types\HiddenField::class,
         Types\HeadingField::class,
         Types\ParagraphField::class,
         Types\DividerField::class,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Choice sources
+    |--------------------------------------------------------------------------
+    |
+    | Named lists a select, radio, checkbox list or multi-select can take its
+    | options from instead of the ones typed in the builder: name => a class
+    | implementing Packstub\FormBuilder\Contracts\ChoiceSource, or a fixed
+    | value => label array. Closures go through FormBuilder::choices() in a
+    | service provider (config must stay cacheable).
+    |
+    */
+
+    'choice_sources' => [],
 
     /*
     |--------------------------------------------------------------------------
@@ -91,6 +110,9 @@ return [
     | header), a JSON definition endpoint for headless clients, a validate
     | endpoint (one step of a multi-step form), an embed script and, when
     | "page" is on, a hosted page that renders the form on its own.
+    |
+    | "share_prefix" is where a private form's share links live
+    | (/f/{token}); null turns them off.
     |
     | The middleware runs on the submit endpoint. Keep "web" for sites with a
     | session (CSRF protection and flashed errors); on a session-less site
@@ -106,6 +128,7 @@ return [
         'page_middleware' => ['web'],
         'page_layout' => 'packstub-form-builder::layout',
         'embed' => true,
+        'share_prefix' => 'f',
     ],
 
     /*
@@ -324,6 +347,22 @@ return [
         'column' => 'tenant_id',
         'model' => null,
         'resolver' => null,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ownership
+    |--------------------------------------------------------------------------
+    |
+    | Every form records the user who created it (user_id). With "only_own"
+    | the Forms resource shows each user the forms they created; users who
+    | pass the "see_all" gate ability (null = nobody) still see every form.
+    |
+    */
+
+    'ownership' => [
+        'only_own' => false,
+        'see_all' => null,
     ],
 
     /*

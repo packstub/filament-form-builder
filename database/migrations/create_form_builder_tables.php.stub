@@ -11,6 +11,7 @@ return new class extends Migration
         $forms = config('packstub-form-builder.tables.forms', 'form_builder_forms');
         $submissions = config('packstub-form-builder.tables.submissions', 'form_builder_submissions');
         $deliveries = config('packstub-form-builder.tables.webhook_deliveries', 'form_builder_webhook_deliveries');
+        $links = config('packstub-form-builder.tables.share_links', 'form_builder_share_links');
 
         Schema::create($forms, function (Blueprint $table): void {
             $table->id();
@@ -32,6 +33,20 @@ return new class extends Migration
             $table->json('settings')->nullable();
             // The tenant the form belongs to, when the plugin is tenant-aware (config "tenancy").
             $table->string(config('packstub-form-builder.tenancy.column', 'tenant_id'), 64)->nullable()->index();
+            // The user who created the form (config "ownership").
+            $table->foreignId('user_id')->nullable()->index();
+            $table->timestamps();
+        });
+
+        Schema::create($links, function (Blueprint $table) use ($forms): void {
+            $table->id();
+            $table->foreignId('form_id')->constrained($forms)->cascadeOnDelete();
+            $table->string('token', 64)->unique();
+            $table->string('label')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamp('revoked_at')->nullable();
+            $table->unsignedInteger('max_submissions')->nullable();
+            $table->foreignId('user_id')->nullable();
             $table->timestamps();
         });
 
@@ -54,6 +69,8 @@ return new class extends Migration
             $table->unsignedInteger('number')->nullable();
             // The visitor's anonymous id (user id, or a hash of IP + user agent), for "one per person".
             $table->string('fingerprint', 64)->nullable();
+            // The share link the submission came through, for a private form.
+            $table->foreignId('share_link_id')->nullable()->index();
             $table->timestamps();
 
             $table->index(['form_id', 'created_at']);
@@ -82,6 +99,7 @@ return new class extends Migration
     {
         Schema::dropIfExists(config('packstub-form-builder.tables.webhook_deliveries', 'form_builder_webhook_deliveries'));
         Schema::dropIfExists(config('packstub-form-builder.tables.submissions', 'form_builder_submissions'));
+        Schema::dropIfExists(config('packstub-form-builder.tables.share_links', 'form_builder_share_links'));
         Schema::dropIfExists(config('packstub-form-builder.tables.forms', 'form_builder_forms'));
     }
 };

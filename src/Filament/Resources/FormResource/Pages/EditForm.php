@@ -7,6 +7,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Packstub\FormBuilder\Filament\FormActions;
+use Packstub\FormBuilder\Filament\Widgets\SubmissionsChart;
 use Packstub\FormBuilder\FormBuilderPlugin;
 use Packstub\FormBuilder\Models\Form;
 
@@ -15,6 +16,13 @@ class EditForm extends EditRecord
     public static function getResource(): string
     {
         return FormBuilderPlugin::get()->getResource();
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        $record = $this->getRecord();
+
+        return $record instanceof Form && $record->submissions()->exists() ? [SubmissionsChart::class] : [];
     }
 
     protected function getHeaderActions(): array

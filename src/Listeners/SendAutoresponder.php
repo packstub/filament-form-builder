@@ -4,12 +4,17 @@ namespace Packstub\FormBuilder\Listeners;
 
 use Illuminate\Support\Facades\Mail;
 use Packstub\FormBuilder\Events\SubmissionReceived;
+use Packstub\FormBuilder\FormBuilder;
 use Packstub\FormBuilder\Mail\Autoresponder;
 
 class SendAutoresponder
 {
     public function handle(SubmissionReceived $event): void
     {
+        if (FormBuilder::faking()) {
+            return;
+        }
+
         $form = $event->form;
 
         if (! (bool) $form->setting('autoresponder', false)) {

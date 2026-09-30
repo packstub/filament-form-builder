@@ -5,13 +5,16 @@ namespace Packstub\FormBuilder\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Packstub\FormBuilder\FormBuilder;
+use Packstub\FormBuilder\Models\ShareLink;
 use Packstub\FormBuilder\Submissions\Captcha;
 use Packstub\FormBuilder\Submissions\ProtectionToken;
 use Packstub\FormBuilder\Submissions\SpamGuard;
 
 /**
  * The form definition for headless clients, with a fresh protection token
- * and the names of the anti-spam fields to send back.
+ * and the names of the anti-spam fields to send back. A private form needs
+ * a signed URL or "?link=" with an active share link's token (send it back
+ * as "_fb_link" with the submission).
  */
 class FormDefinitionController
 {
@@ -19,7 +22,7 @@ class FormDefinitionController
     {
         $form = FormBuilder::formModel()::query()->where('slug', $form)->firstOrFail();
 
-        if ($form->isPrivate() && ! $request->hasValidSignature()) {
+        if ($form->isPrivate() && ! $request->hasValidSignature() && ShareLink::findActive($form, $request->query('link')) === null) {
             abort(403, __('packstub-form-builder::form-builder.frontend.private'));
         }
 

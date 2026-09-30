@@ -47,13 +47,17 @@ class SubmissionNotification extends Mailable
 
     public function content(): Content
     {
+        $form = $this->submission->form;
+        Branding::apply($this, $form);
+
         return new Content(
             markdown: 'packstub-form-builder::mail.submission',
             with: [
-                'form' => $this->submission->form,
+                'form' => $form,
                 'submission' => $this->submission,
                 'rows' => $this->submission->formatted(),
                 'url' => $this->panelUrl(),
+                ...Branding::viewData($form),
             ],
         );
     }

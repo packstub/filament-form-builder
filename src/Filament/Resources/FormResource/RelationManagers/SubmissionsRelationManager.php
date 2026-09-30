@@ -61,6 +61,7 @@ class SubmissionsRelationManager extends RelationManager
     {
         /** @var Form $form */
         $form = $this->getOwnerRecord();
+        $hasLinks = $form->shareLinks()->exists();
 
         return $table
             ->modelLabel(__('packstub-form-builder::form-builder.submissions.label'))
@@ -101,6 +102,12 @@ class SubmissionsRelationManager extends RelationManager
                     ->badge()
                     ->color('gray')
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('shareLink.label')
+                    ->label(__('packstub-form-builder::form-builder.share.private_link'))
+                    ->state(fn (FormSubmission $record): ?string => $record->shareLink === null ? null : ($record->shareLink->label ?? $record->shareLink->token))
+                    ->placeholder('—')
+                    ->toggleable()
+                    ->visible($hasLinks),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -115,6 +122,10 @@ class SubmissionsRelationManager extends RelationManager
                         false: fn (Builder $query) => $query->whereNull('read_at'),
                     ),
                 ...$this->fieldFilters($form),
+                SelectFilter::make('share_link_id')
+                    ->label(__('packstub-form-builder::form-builder.share.private_link'))
+                    ->options(fn (): array => $form->shareLinks()->latest()->get()->mapWithKeys(fn ($link): array => [$link->getKey() => $link->label ?? $link->token])->all())
+                    ->visible($hasLinks),
             ])
             ->recordAction('view')
             ->recordActions([
@@ -351,6 +362,7 @@ class SubmissionsRelationManager extends RelationManager
                     TextEntry::make('created_at')->label(__('packstub-form-builder::form-builder.fields.created_at'))->dateTime(),
                     TextEntry::make('channel')->label(__('packstub-form-builder::form-builder.fields.channel'))->badge()->color('gray'),
                     TextEntry::make('user_id')->label(__('packstub-form-builder::form-builder.fields.user'))->placeholder('—'),
+                    TextEntry::make('share_link')->label(__('packstub-form-builder::form-builder.share.private_link'))->state(fn (FormSubmission $record): ?string => $record->shareLink?->label ?? $record->shareLink?->token)->placeholder('—')->hidden(fn (FormSubmission $record): bool => $record->share_link_id === null),
                     TextEntry::make('source_url')->label(__('packstub-form-builder::form-builder.fields.source_url'))->placeholder('—')->columnSpanFull(),
                     TextEntry::make('ip')->label(__('packstub-form-builder::form-builder.fields.ip'))->placeholder('—')->fontFamily(FontFamily::Mono),
                     TextEntry::make('user_agent')->label(__('packstub-form-builder::form-builder.fields.user_agent'))->placeholder('—'),
