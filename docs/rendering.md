@@ -117,7 +117,7 @@ GET /forms/contact/definition
 
 `visibility` and `requirement` carry a field's conditions (`mode`, `logic`, `rules` of `field`, `operator`, `value`); `mode` is `wizard` with the `wizard` options when the form is multi-step; `protection.captcha` names the provider, its site key and the input to post. Files go as `{ "name": "brief.pdf", "data": "data:application/pdf;base64,…" }` items.
 
-Render the fields however you like, then post the values with the token under `token_field` and, if `honeypot_field` is set, that field empty:
+Render the fields however you like, then post the values with the token under `token_field` and, if `honeypot_field` is set, that field empty. A private form needs the token (read its definition through a [share link](sharing-and-templates.md) with `?link=`, or a signed URL); a post without it answers `403`:
 
 ```http
 POST /forms/contact
