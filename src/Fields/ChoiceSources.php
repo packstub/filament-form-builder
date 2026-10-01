@@ -9,7 +9,8 @@ use Packstub\FormBuilder\Contracts\ChoiceSource;
 /**
  * The named choice sources a choice field can take its options from:
  * closures, arrays or ChoiceSource classes registered in code. Results are
- * kept for the rest of the request, per source and field.
+ * kept for the rest of the request (or queued job), per source and field
+ * definition.
  */
 class ChoiceSources
 {
@@ -76,7 +77,7 @@ class ChoiceSources
             return [];
         }
 
-        $cacheKey = $name.'|'.$field->key;
+        $cacheKey = $name.'|'.$field->key.'|'.md5((string) json_encode($field->options));
 
         if (isset($this->resolved[$cacheKey])) {
             return $this->resolved[$cacheKey];

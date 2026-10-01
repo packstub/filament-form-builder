@@ -83,7 +83,7 @@ class Form extends Component
 
         $request = request();
         $this->state = FormState::for($this->form);
-        $this->token = app(ProtectionToken::class)->make($this->form);
+        $this->token = app(ProtectionToken::class)->make($this->form, link: $this->link);
         $this->honeypotField = $this->form->usesHoneypot() ? app(SpamGuard::class)->honeypotField() : null;
         $this->formId = $this->id ?? 'form-'.$this->form->slug;
         $this->action ??= $this->form->submitUrl();

@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Contracts\Queue\Job;
+use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Validation\ValidationException;
 use Packstub\FormBuilder\Contracts\ChoiceSource;
@@ -103,4 +105,27 @@ it('offers the source select before the typed list in the builder', function ():
     $names = fn (): array => collect(app(FieldTypeRegistry::class)->get('select')->editorSchema())->map->getName()->all();
 
     expect($names())->toBe(['choices_source', 'choices']);
+});
+
+it('resolves a source per field definition and forgets the choices after each request and job', function (): void {
+    $calls = 0;
+    FormBuilder::choices('levels', function (Field $field) use (&$calls): array {
+        $calls++;
+
+        return $field->option('advanced') ? ['pro' => 'Pro'] : ['basic' => 'Basic'];
+    });
+
+    $sources = app(ChoiceSources::class);
+    $basic = Form::fromArray(['name' => 'Basic', 'fields' => [field('select', 'Level', ['key' => 'level'])]])->field('level');
+    $advanced = Form::fromArray(['name' => 'Advanced', 'fields' => [field('select', 'Level', ['key' => 'level', 'advanced' => true])]])->field('level');
+
+    expect($sources->resolve('levels', $basic))->toBe(['basic' => 'Basic'])
+        ->and($sources->resolve('levels', $advanced))->toBe(['pro' => 'Pro'])
+        ->and($sources->resolve('levels', $basic))->toBe(['basic' => 'Basic'])
+        ->and($calls)->toBe(2);
+
+    event(new JobProcessed('sync', Mockery::mock(Job::class)));
+    $sources->resolve('levels', $basic);
+
+    expect($calls)->toBe(3);
 });

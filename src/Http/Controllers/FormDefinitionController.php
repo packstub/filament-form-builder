@@ -22,7 +22,9 @@ class FormDefinitionController
     {
         $form = FormBuilder::formModel()::query()->where('slug', $form)->firstOrFail();
 
-        if ($form->isPrivate() && ! $request->hasValidSignature() && ShareLink::findActive($form, $request->query('link')) === null) {
+        $link = ShareLink::findActive($form, $request->query('link'));
+
+        if ($form->isPrivate() && ! $request->hasValidSignature() && $link === null) {
             abort(403, __('packstub-form-builder::form-builder.frontend.private'));
         }
 
@@ -30,7 +32,7 @@ class FormDefinitionController
             ...$form->toDefinition(),
             'protection' => [
                 'token_field' => $tokens->field(),
-                'token' => $tokens->make($form),
+                'token' => $tokens->make($form, link: $link?->token),
                 'honeypot_field' => $form->usesHoneypot() ? $spam->honeypotField() : null,
                 'password' => $form->password() !== null,
                 'unlock_url' => $form->password() !== null ? route('packstub-form-builder.unlock', $form) : null,

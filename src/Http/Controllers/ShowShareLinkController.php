@@ -5,11 +5,13 @@ namespace Packstub\FormBuilder\Http\Controllers;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Packstub\FormBuilder\FormBuilder;
+use Packstub\FormBuilder\Http\FormState;
 
 /**
  * GET /f/{token}: a private (or public) form through one of its share links,
  * on the hosted page; "?embed=1" renders the bare layout for an iframe. A
- * revoked, expired or full link answers 403 with the reason.
+ * revoked, expired or full link answers 403 with the reason, except right
+ * after a submission (the one that filled the link shows its success message).
  */
 class ShowShareLinkController
 {
@@ -20,7 +22,7 @@ class ShowShareLinkController
 
         abort_if($form === null, 404);
 
-        if (($reason = $link->closedReason()) !== null) {
+        if (($reason = $link->closedReason()) !== null && ! FormState::for($form, $request)->success) {
             abort(403, $reason);
         }
 

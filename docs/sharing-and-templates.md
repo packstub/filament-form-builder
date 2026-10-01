@@ -17,7 +17,9 @@ $link->revoke();
 $link->status();   // active, expired, revoked or full
 ```
 
-A headless client reads a private form's definition with `?link={token}` and posts the token back as `_fb_link`.
+A private form takes submissions only from a render the server made: the form carries its link inside the protection token, so a revoked or expired link stops working even on a page left open. A link's maximum counts stored submissions, so it is offered only when the form stores them.
+
+A headless client reads a private form's definition with `?link={token}` and posts back the protection token it received (`protection.token`, which holds the link) and the link as `_fb_link`.
 
 The signed links of 1.2 (`$form->shareUrl()`, `$form->shareUrl(now()->addDays(7))`) keep working throughout 1.x.
 

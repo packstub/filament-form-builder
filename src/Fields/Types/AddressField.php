@@ -114,16 +114,22 @@ class AddressField extends FieldType
     }
 
     /**
-     * The parts a required address needs.
+     * The parts a required address needs; never none, or a required address
+     * could be left blank.
      *
      * @return array<int, string>
      */
     public function requiredParts(Field $field): array
     {
+        $parts = array_keys($this->parts($field));
         $chosen = $field->option('required_parts');
-        $chosen = is_array($chosen) ? $chosen : self::REQUIRED_BY_DEFAULT;
+        $required = array_values(array_intersect($parts, is_array($chosen) ? $chosen : self::REQUIRED_BY_DEFAULT));
 
-        return array_values(array_intersect(array_keys($this->parts($field)), $chosen));
+        if ($required === []) {
+            $required = array_values(array_intersect($parts, self::REQUIRED_BY_DEFAULT)) ?: array_slice($parts, 0, 1);
+        }
+
+        return $required;
     }
 
     /**

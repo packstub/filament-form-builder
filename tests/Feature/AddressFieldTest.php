@@ -107,3 +107,14 @@ it('renders a fieldset of inputs in the Livewire renderer and submits it', funct
 
     expect($form->submissions()->first()->data['shipping']['city'])->toBe('Berlin');
 });
+
+it('keeps a required address from going blank when no part is ticked as required', function (): void {
+    $form = addressForm(['parts' => ['line1', 'line2', 'region'], 'required_parts' => []]);
+
+    try {
+        app(Submitter::class)->submit($form, ['shipping' => ['line1' => '', 'line2' => '', 'region' => '']], (new SubmissionContext)->trusted());
+        $this->fail('Expected a validation error.');
+    } catch (ValidationException $e) {
+        expect(array_keys($e->errors()))->toBe(['shipping.line1']);
+    }
+});

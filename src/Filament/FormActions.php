@@ -92,7 +92,8 @@ class FormActions
                     ->helperText(__('packstub-form-builder::form-builder.share.max_submissions_hint'))
                     ->integer()
                     ->minValue(1)
-                    ->visible($record->isPrivate()),
+                    // Counted from stored submissions.
+                    ->visible($record->isPrivate() && $record->store_submissions),
                 DateTimePicker::make('opens_at')
                     ->label(__('packstub-form-builder::form-builder.fields.opens_at'))
                     ->native(),

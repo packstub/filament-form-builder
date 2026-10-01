@@ -8,6 +8,7 @@ use Packstub\FormBuilder\Filament\Resources\FormResource\RelationManagers\ShareL
 use Packstub\FormBuilder\Filament\Resources\FormResource\RelationManagers\SubmissionsRelationManager;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\ShareLink;
+use Packstub\FormBuilder\Submissions\ProtectionToken;
 
 use function Pest\Livewire\livewire;
 
@@ -96,6 +97,60 @@ it('keeps submissions when a link is deleted', function (): void {
         ->and($form->submissions()->first()->share_link_id)->toBeNull();
 });
 
+function renderedToken(TestResponse $page): string
+{
+    preg_match('/name="'.app(ProtectionToken::class)->field().'" value="([^"]+)"/', $page->getContent(), $match);
+
+    return html_entity_decode($match[1] ?? '');
+}
+
+it('refuses a private form posted without a render, and holds a rendered form to its link', function (): void {
+    $form = privateForm();
+    $link = $form->shareLinks()->create();
+    $input = contactInput($form, [app(ProtectionToken::class)->field() => null]);
+
+    $this->postJson('/forms/contact', $input)->assertForbidden()->assertJson(['message' => 'This form is private.']);
+
+    $token = renderedToken($this->get('/f/'.$link->token)->assertOk());
+    $link->revoke();
+
+    // Dropping "_fb_link" does not get around the revoked link.
+    $this->postJson('/forms/contact', [...$input, app(ProtectionToken::class)->field() => $token])
+        ->assertForbidden()
+        ->assertJson(['message' => 'This link is no longer valid.']);
+
+    $signed = renderedToken($this->get($form->shareUrl())->assertOk());
+
+    $this->postJson('/forms/contact', [...$input, app(ProtectionToken::class)->field() => $signed])->assertOk();
+
+    expect($form->submissions()->count())->toBe(1);
+});
+
+it('binds the definition token of a headless client to its link', function (): void {
+    $form = privateForm();
+    $link = $form->shareLinks()->create();
+    $token = $this->getJson('/forms/contact/definition?link='.$link->token)->json('protection.token');
+
+    expect(app(ProtectionToken::class)->link($form, $token))->toBe($link->token);
+
+    $link->revoke();
+
+    $this->postJson('/forms/contact', contactInput($form, [app(ProtectionToken::class)->field() => $token]))->assertForbidden();
+});
+
+it('shows the success message on a single-use link after its submission without JavaScript', function (): void {
+    $form = privateForm();
+    $link = $form->shareLinks()->create(['max_submissions' => 1]);
+    $page = url('/f/'.$link->token);
+
+    $this->post('/forms/contact', [...contactInput($form), '_fb_link' => $link->token, '_fb_return' => $page])
+        ->assertRedirect($page.'#form-contact');
+
+    $this->get($page)->assertOk()->assertSee($form->successMessage());
+    $this->get($page)->assertForbidden();
+    $this->get($page.'?fb_success=contact')->assertOk()->assertDontSee('name="name"', false);
+});
+
 describe('panel', function (): void {
     beforeEach(function (): void {
         Filament::setCurrentPanel('admin');
@@ -116,6 +171,20 @@ describe('panel', function (): void {
             ->and($link->max_submissions)->toBe(5)
             ->and($link->expires_at)->not->toBeNull()
             ->and($link->user_id)->toBe(auth()->id());
+    });
+
+    it('offers a submission cap on a link only when the form stores submissions', function (): void {
+        $form = privateForm();
+
+        livewire(EditForm::class, ['record' => $form->getRouteKey()])
+            ->mountAction('share')
+            ->assertSchemaComponentVisible('max_submissions', 'mountedActionSchema0');
+
+        $form->update(['store_submissions' => false]);
+
+        livewire(EditForm::class, ['record' => $form->getRouteKey()])
+            ->mountAction('share')
+            ->assertSchemaComponentHidden('max_submissions', 'mountedActionSchema0');
     });
 
     it('lists, creates and revokes links in the relation manager', function (): void {

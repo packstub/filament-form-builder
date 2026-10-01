@@ -41,7 +41,13 @@ class Submitter
         $context ??= new SubmissionContext;
 
         $this->assertOpen($form, $context);
-        $link = $this->shareLink($form, $input[ShareLink::FIELD] ?? null);
+        $link = $this->shareLink($form, $this->tokens->link($form, $input[$this->tokens->field()] ?? null) ?? $input[ShareLink::FIELD] ?? null);
+
+        // A private form takes a submission only from a render the server
+        // made (its own page, a signed URL, an active share link).
+        if (! $context->trusted && $form->isPrivate() && $link === null && ! $this->tokens->isValid($form, $input[$this->tokens->field()] ?? null)) {
+            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.private'));
+        }
 
         if (! $context->trusted && ! $this->passwords->keyIsValid($form, $input[PasswordGate::FIELD] ?? null)) {
             throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.password_required'));
