@@ -24,6 +24,10 @@ Upgrading: run `php artisan vendor:publish --tag=packstub-form-builder-migration
 - A validation error on a part of a value (`address.city`, `tags.0`) shows on its field in the Blade renderer.
 - A private form takes submissions only from a page the server rendered (your own page, a signed link, an active share link); a post without its protection token answers 403 "This form is private."
 
+### Fixed
+
+- The plugin on a panel other than the default one: registering the routes failed with *Plugin [packstub-form-builder] is not registered for panel*.
+
 ## 1.2.0 — 2026-09-25
 
 Upgrading: run `php artisan vendor:publish --tag=packstub-form-builder-migrations` and `php artisan migrate` (a guarded migration adds the submission number and fingerprint, the tenant column and the webhook deliveries table), then `php artisan filament:assets` (the Livewire stylesheet grew from 14 to 24 KB gzipped to cover the new components). `SubmissionsCsv` is now `SubmissionsExport` (same `download()` / `write()` signature). Nothing else changes for existing forms.

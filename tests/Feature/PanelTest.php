@@ -1,6 +1,7 @@
 <?php
 
 use Filament\Facades\Filament;
+use Filament\Panel;
 use Filament\Schemas\Schema;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -14,6 +15,7 @@ use Packstub\FormBuilder\Filament\Resources\FormResource\Pages\ListForms;
 use Packstub\FormBuilder\Filament\Resources\FormResource\RelationManagers\SubmissionsRelationManager;
 use Packstub\FormBuilder\Filament\Resources\FormResource\RelationManagers\WebhookDeliveriesRelationManager;
 use Packstub\FormBuilder\Filament\SubmissionsExport;
+use Packstub\FormBuilder\FormBuilderPlugin;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\WebhookDelivery;
 use Packstub\FormBuilder\Submissions\SubmissionContext;
@@ -331,4 +333,13 @@ it('summarises conditions and rules in the block sections and hides requirement 
         ->assertSee('2 rules · custom message')
         ->assertSee('Add condition')
         ->assertSeeHtml('/forms/logic/definition<br />');
+});
+
+it('is found on its panel while a panel without it is current', function (): void {
+    // Filament registers every panel's routes while the default panel is current.
+    Filament::registerPanel(Panel::make()->id('plain')->path('plain'));
+    Filament::setCurrentPanel('plain');
+
+    expect(FormBuilderPlugin::get())->toBe(Filament::getPanel('admin')->getPlugin(FormBuilderPlugin::ID))
+        ->and(ListForms::getResource())->toBe(FormResource::class);
 });
