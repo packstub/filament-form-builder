@@ -11,6 +11,10 @@ class DispatchWebhook
 {
     public function handle(SubmissionReceived $event): void
     {
+        if (FormBuilder::faking()) {
+            return;
+        }
+
         $webhook = Webhook::for($event->form);
 
         if ($webhook === null) {

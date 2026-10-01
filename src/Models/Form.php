@@ -32,6 +32,7 @@ use Packstub\FormBuilder\FormBuilder;
  * @property ?Carbon $closes_at
  * @property ?array<string, mixed> $settings
  * @property ?int $submissions_number
+ * @property ?int $user_id
  */
 class Form extends Model
 {
@@ -80,6 +81,10 @@ class Form extends Model
         });
 
         static::creating(function (self $form): void {
+            if ($form->user_id === null && ($user = auth()->id()) !== null) {
+                $form->user_id = $user;
+            }
+
             $column = FormBuilder::tenantColumn();
 
             if ($column !== null && $form->getAttribute($column) === null && ($tenant = FormBuilder::currentTenantKey()) !== null) {
@@ -106,6 +111,19 @@ class Form extends Model
     public function webhookDeliveries(): HasMany
     {
         return $this->hasMany(FormBuilder::webhookDeliveryModel(), 'form_id');
+    }
+
+    public function shareLinks(): HasMany
+    {
+        return $this->hasMany(FormBuilder::shareLinkModel(), 'form_id');
+    }
+
+    /**
+     * The user who created the form.
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(config('auth.providers.users.model'), 'user_id');
     }
 
     /**
@@ -372,6 +390,8 @@ class Form extends Model
             if ($field->type->acceptsMultiple() && ($elementRules = $field->type->elementRules($field)) !== []) {
                 $rules[$field->key.'.*'] = $elementRules;
             }
+
+            $rules = [...$rules, ...$field->nestedRules($values)];
         }
 
         return $rules;
@@ -396,7 +416,17 @@ class Form extends Model
      */
     public function validationAttributes(): array
     {
-        return $this->inputFields()->map(fn (Field $field): string => $field->label)->all();
+        $attributes = [];
+
+        foreach ($this->inputFields() as $field) {
+            $attributes[$field->key] = $field->label;
+
+            foreach ($field->type->nestedAttributes($field) as $part => $label) {
+                $attributes[$field->key.'.'.$part] = $label;
+            }
+        }
+
+        return $attributes;
     }
 
     /**
@@ -726,8 +756,9 @@ class Form extends Model
     }
 
     /**
-     * A signed link to the hosted page, the only way in for a private form.
-     * Valid from now until $until (null = no expiry).
+     * A signed link to the hosted page, a way into a private form besides
+     * its share links (shareLinks()). Valid from now until $until (null =
+     * no expiry).
      */
     public function shareUrl(?\DateTimeInterface $until = null): ?string
     {

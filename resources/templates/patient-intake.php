@@ -50,10 +50,9 @@ return [
                             ],
                         ],
                         [
-                            'type' => 'textarea',
+                            'type' => 'address',
                             'data' => [
                                 'label' => 'Address',
-                                'rows' => 2,
                             ],
                         ],
                     ],

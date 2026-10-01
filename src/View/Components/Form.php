@@ -54,6 +54,7 @@ class Form extends Component
     /**
      * @param  FormModel|array<string, mixed>|string|int  $form  A model, a slug, an id, or a portable array (Form::fromArray).
      * @param  array<string, mixed>  $values  Values to prefill, keyed by field key.
+     * @param  string|null  $link  The token of the share link the form was opened through.
      */
     public function __construct(
         FormModel|array|string|int $form,
@@ -64,6 +65,7 @@ class Form extends Component
         public ?string $id = null,
         public ?string $class = null,
         public array $values = [],
+        public ?string $link = null,
     ) {
         $this->form = is_array($form) ? FormModel::fromArray($form) : FormBuilder::find($form);
         $this->enhance ??= (bool) config('packstub-form-builder.frontend.enhance', true);
@@ -81,7 +83,7 @@ class Form extends Component
 
         $request = request();
         $this->state = FormState::for($this->form);
-        $this->token = app(ProtectionToken::class)->make($this->form);
+        $this->token = app(ProtectionToken::class)->make($this->form, link: $this->link);
         $this->honeypotField = $this->form->usesHoneypot() ? app(SpamGuard::class)->honeypotField() : null;
         $this->formId = $this->id ?? 'form-'.$this->form->slug;
         $this->action ??= $this->form->submitUrl();

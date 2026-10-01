@@ -18,8 +18,9 @@ use Packstub\FormBuilder\Models\WebhookDelivery;
 use Packstub\FormBuilder\Webhooks\DeliverWebhook;
 
 /**
- * The log of a form's webhook deliveries, shown once the form has a
- * webhook URL: status, attempts, response, and a retry.
+ * The log of a form's webhook deliveries and chat channel messages, shown
+ * once the form has a webhook URL or a channel: status, attempts,
+ * response, and a retry.
  */
 class WebhookDeliveriesRelationManager extends RelationManager
 {
@@ -33,7 +34,7 @@ class WebhookDeliveriesRelationManager extends RelationManager
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         /** @var Form $ownerRecord */
-        return filled($ownerRecord->setting('webhook_url')) || $ownerRecord->webhookDeliveries()->exists();
+        return filled($ownerRecord->setting('webhook_url')) || filled($ownerRecord->setting('channels')) || $ownerRecord->webhookDeliveries()->exists();
     }
 
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
@@ -65,6 +66,13 @@ class WebhookDeliveriesRelationManager extends RelationManager
                     ->label(__('packstub-form-builder::form-builder.fields.created_at'))
                     ->dateTime()
                     ->sortable(),
+                TextColumn::make('event')
+                    ->label(__('packstub-form-builder::form-builder.webhooks.event'))
+                    ->badge()
+                    ->color('gray')
+                    ->formatStateUsing(fn (WebhookDelivery $record): string => $record->isChannelMessage()
+                        ? __('packstub-form-builder::form-builder.channels.'.substr($record->event, 8))
+                        : __('packstub-form-builder::form-builder.webhooks.webhook')),
                 TextColumn::make('submission.number')
                     ->label(__('packstub-form-builder::form-builder.submissions.label'))
                     ->formatStateUsing(fn ($state, WebhookDelivery $record): string => $record->submission?->reference() ?? '—'),

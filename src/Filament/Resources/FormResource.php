@@ -11,6 +11,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
@@ -29,6 +30,7 @@ use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\IconPosition;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,11 +39,14 @@ use Illuminate\Support\Str;
 use Packstub\FormBuilder\Filament\FieldBlocks;
 use Packstub\FormBuilder\Filament\FormActions;
 use Packstub\FormBuilder\Filament\Resources\FormResource\Pages;
+use Packstub\FormBuilder\Filament\Resources\FormResource\RelationManagers\ShareLinksRelationManager;
 use Packstub\FormBuilder\Filament\Resources\FormResource\RelationManagers\SubmissionsRelationManager;
 use Packstub\FormBuilder\Filament\Resources\FormResource\RelationManagers\WebhookDeliveriesRelationManager;
+use Packstub\FormBuilder\Filament\Widgets\SubmissionsChart;
 use Packstub\FormBuilder\FormBuilder;
 use Packstub\FormBuilder\FormBuilderPlugin;
 use Packstub\FormBuilder\Models\Form;
+use Packstub\FormBuilder\Notifications\ChannelMessage;
 use Packstub\FormBuilder\Submissions\Captcha;
 use Packstub\FormBuilder\Webhooks\Webhook;
 
@@ -97,10 +102,25 @@ class FormResource extends Resource
 
         $unread = FormBuilder::submissionModel()::query()
             ->unread()
-            ->whereHas('form')
+            ->whereHas('form', fn (Builder $query) => static::scopeToOwner($query))
             ->count();
 
         return $unread > 0 ? (string) $unread : null;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return static::scopeToOwner(parent::getEloquentQuery());
+    }
+
+    /**
+     * Only the current user's forms, when config "ownership.only_own" says so.
+     */
+    public static function scopeToOwner(Builder $query): Builder
+    {
+        $owner = FormBuilder::restrictedToOwner();
+
+        return $owner === null ? $query : $query->where($query->qualifyColumn('user_id'), $owner);
     }
 
     public static function canAccess(): bool
@@ -395,6 +415,34 @@ class FormResource extends Resource
                         ->searchable()
                         ->native(false),
                 ]),
+            Section::make(__('packstub-form-builder::form-builder.sections.channels'))
+                ->description(__('packstub-form-builder::form-builder.fields.channels_hint'))
+                ->collapsed(fn (?Model $record): bool => blank($record?->setting('channels')))
+                ->schema([
+                    Repeater::make('settings.channels')
+                        ->hiddenLabel()
+                        ->schema([
+                            Select::make('provider')
+                                ->label(__('packstub-form-builder::form-builder.fields.channel_provider'))
+                                ->options(collect(ChannelMessage::PROVIDERS)->mapWithKeys(fn (string $provider): array => [$provider => __('packstub-form-builder::form-builder.channels.'.$provider)])->all())
+                                ->default('slack')
+                                ->selectablePlaceholder(false)
+                                ->required()
+                                ->native(false),
+                            TextInput::make('url')
+                                ->label(__('packstub-form-builder::form-builder.fields.channel_url'))
+                                ->url()
+                                ->startsWith(['https://'])
+                                ->required()
+                                ->maxLength(2048)
+                                ->columnSpan(2),
+                        ])
+                        ->columns(3)
+                        ->compact()
+                        ->defaultItems(0)
+                        ->reorderable(false)
+                        ->addActionLabel(__('packstub-form-builder::form-builder.fields.add_channel')),
+                ]),
             Section::make(__('packstub-form-builder::form-builder.sections.webhook'))
                 ->columns(2)
                 ->collapsed(fn (?Model $record): bool => blank($record?->setting('webhook_url')))
@@ -641,6 +689,10 @@ class FormResource extends Resource
                 IconColumn::make('is_active')
                     ->label(__('packstub-form-builder::form-builder.fields.is_active'))
                     ->boolean(),
+                TextColumn::make('owner.name')
+                    ->label(__('packstub-form-builder::form-builder.fields.owner'))
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
                     ->label(__('packstub-form-builder::form-builder.fields.updated_at'))
                     ->since()
@@ -649,6 +701,11 @@ class FormResource extends Resource
             ->defaultSort('updated_at', 'desc')
             ->filters([
                 TernaryFilter::make('is_active')->label(__('packstub-form-builder::form-builder.fields.is_active')),
+                Filter::make('mine')
+                    ->label(__('packstub-form-builder::form-builder.fields.mine'))
+                    ->toggle()
+                    ->query(fn (Builder $query): Builder => $query->where($query->qualifyColumn('user_id'), auth()->id()))
+                    ->visible(fn (): bool => FormBuilder::restrictedToOwner() === null),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -673,7 +730,15 @@ class FormResource extends Resource
     {
         return [
             SubmissionsRelationManager::class,
+            ShareLinksRelationManager::class,
             WebhookDeliveriesRelationManager::class,
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            SubmissionsChart::class,
         ];
     }
 

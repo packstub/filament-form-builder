@@ -45,8 +45,9 @@ The package registers, under `routes.prefix` (`forms`):
 | `GET /forms/{slug}/embed.js` | `packstub-form-builder.embed` | The script embed (off with `routes.embed`) |
 | `GET /forms/{slug}` | `packstub-form-builder.show` | The hosted page (off with `routes.page`); `?embed=1` for an iframe |
 | `GET /forms/files/{submission}/{field}/{index}` | `packstub-form-builder.file` | A signed download of an uploaded file |
+| `GET /f/{token}` | `packstub-form-builder.share` | A private form through a share link (`routes.share_prefix`; `null` turns it off) |
 
-If your site has a catch-all route (a CMS), make sure `forms` is excluded from it, or change the prefix.
+If your site has a catch-all route (a CMS), make sure `forms` and `f` are excluded from it, or change the prefixes.
 
 ## Scheduling
 

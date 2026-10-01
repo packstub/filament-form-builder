@@ -26,6 +26,7 @@ use Packstub\FormBuilder\FormBuilder;
  * @property ?array<string, mixed> $meta
  * @property ?Carbon $read_at
  * @property ?int $number
+ * @property ?int $share_link_id
  * @property Form $form
  */
 class FormSubmission extends Model
@@ -60,6 +61,11 @@ class FormSubmission extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(config('auth.providers.users.model'), 'user_id');
+    }
+
+    public function shareLink(): BelongsTo
+    {
+        return $this->belongsTo(FormBuilder::shareLinkModel(), 'share_link_id');
     }
 
     public function webhookDeliveries(): HasMany
@@ -179,6 +185,7 @@ class FormSubmission extends Model
                 'source_url' => $this->source_url,
                 'channel' => $this->channel,
                 'user_id' => $this->user_id,
+                'share_link_id' => $this->share_link_id,
             ], fn ($value): bool => $value !== null) : null,
         ];
     }

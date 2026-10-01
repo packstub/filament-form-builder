@@ -45,8 +45,16 @@ class FormBuilderPlugin implements Plugin
 
     public static function get(): static
     {
+        $panel = Filament::getCurrentOrDefaultPanel();
+
+        // Filament registers every panel's routes while the default panel is
+        // current, so a panel other than the default one may carry the plugin.
+        if (! $panel->hasPlugin(static::ID)) {
+            $panel = collect(Filament::getPanels())->first(fn (Panel $panel): bool => $panel->hasPlugin(static::ID)) ?? $panel;
+        }
+
         /** @var static $plugin */
-        $plugin = filament(static::ID);
+        $plugin = $panel->getPlugin(static::ID);
 
         return $plugin;
     }

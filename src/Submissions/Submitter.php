@@ -14,6 +14,7 @@ use Packstub\FormBuilder\Fields\Field;
 use Packstub\FormBuilder\FormBuilder;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\FormSubmission;
+use Packstub\FormBuilder\Models\ShareLink;
 
 /**
  * The one path every submission takes, whatever the renderer: availability,
@@ -40,6 +41,13 @@ class Submitter
         $context ??= new SubmissionContext;
 
         $this->assertOpen($form, $context);
+        $link = $this->shareLink($form, $this->tokens->link($form, $input[$this->tokens->field()] ?? null) ?? $input[ShareLink::FIELD] ?? null);
+
+        // A private form takes a submission only from a render the server
+        // made (its own page, a signed URL, an active share link).
+        if (! $context->trusted && $form->isPrivate() && $link === null && ! $this->tokens->isValid($form, $input[$this->tokens->field()] ?? null)) {
+            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.private'));
+        }
 
         if (! $context->trusted && ! $this->passwords->keyIsValid($form, $input[PasswordGate::FIELD] ?? null)) {
             throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.password_required'));
@@ -58,6 +66,7 @@ class Submitter
 
         $data = $this->validate($form, $input);
         $submission = $this->build($form, $data, $context);
+        $submission->share_link_id = $link?->getKey();
 
         if ($form->store_submissions) {
             DB::transaction(function () use ($form, $submission): void {
@@ -91,6 +100,31 @@ class Submitter
         if ($form->onePerPerson() && $this->hasSubmitted($form, $context)) {
             throw new FormClosedException((string) $form->setting('already_submitted_message', __('packstub-form-builder::form-builder.frontend.already_submitted')));
         }
+    }
+
+    /**
+     * The share link a submission came through, when it carries one; a
+     * revoked, expired or full link closes the form for it.
+     *
+     * @throws FormClosedException
+     */
+    public function shareLink(Form $form, mixed $token): ?ShareLink
+    {
+        if (! is_string($token) || $token === '') {
+            return null;
+        }
+
+        $link = $form->exists ? $form->shareLinks()->where('token', $token)->first() : null;
+
+        if ($link === null) {
+            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.link_invalid'));
+        }
+
+        if (($reason = $link->closedReason()) !== null) {
+            throw new FormClosedException($reason);
+        }
+
+        return $link;
     }
 
     /**

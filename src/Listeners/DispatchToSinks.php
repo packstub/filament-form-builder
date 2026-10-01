@@ -11,6 +11,10 @@ class DispatchToSinks
 
     public function handle(SubmissionReceived $event): void
     {
+        if (FormBuilder::faking()) {
+            return;
+        }
+
         foreach ($this->formBuilder->sinks() as $sink) {
             $sink->handle($event->submission);
         }

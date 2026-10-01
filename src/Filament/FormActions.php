@@ -10,7 +10,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Livewire;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\IconPosition;
 use Illuminate\Contracts\Support\Arrayable;
@@ -23,6 +22,7 @@ use Packstub\FormBuilder\FormBuilder;
 use Packstub\FormBuilder\FormBuilderPlugin;
 use Packstub\FormBuilder\Livewire\FormBuilderForm;
 use Packstub\FormBuilder\Models\Form;
+use Packstub\FormBuilder\Models\ShareLink;
 use Packstub\FormBuilder\Templates\Templates;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -33,8 +33,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class FormActions
 {
     /**
-     * The public link (or, for a private form, a signed share link with an
-     * optional expiry), the availability window and the embed snippets.
+     * The public link, the availability window and the embed snippets; on a
+     * private form, a new share link (label, expiry, cap) listed under
+     * Share links, where it can be revoked.
      */
     public static function share(): Action
     {
@@ -51,13 +52,15 @@ class FormActions
             ->fillForm(fn (Form $record): array => [
                 'opens_at' => $record->opens_at,
                 'closes_at' => $record->closes_at,
+                'label' => null,
                 'expires_at' => null,
+                'max_submissions' => null,
             ])
             ->schema(fn (Form $record): array => [
                 TextEntry::make('link')
-                    ->label($record->isPrivate() ? __('packstub-form-builder::form-builder.share.private_link') : __('packstub-form-builder::form-builder.share.link'))
-                    ->helperText($record->isPrivate() ? __('packstub-form-builder::form-builder.share.private_link_hint') : __('packstub-form-builder::form-builder.share.link_hint'))
-                    ->state(fn (Get $get): string => static::linkFor($record, $get('expires_at')) ?? '—')
+                    ->label(__('packstub-form-builder::form-builder.share.link'))
+                    ->helperText(__('packstub-form-builder::form-builder.share.link_hint'))
+                    ->state(fn (): string => $record->pageUrl() ?? '—')
                     ->copyable()
                     ->copyableState(fn (string $state): string => $state)
                     ->copyMessage(__('packstub-form-builder::form-builder.embed.copied'))
@@ -67,13 +70,30 @@ class FormActions
                     ->fontFamily(FontFamily::Mono)
                     ->formatStateUsing(fn (string $state): string => nl2br(e($state)))
                     ->html()
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->visible(! $record->isPrivate()),
+                TextEntry::make('private')
+                    ->hiddenLabel()
+                    ->state(__('packstub-form-builder::form-builder.share.private_link_hint'))
+                    ->columnSpanFull()
+                    ->visible($record->isPrivate()),
+                TextInput::make('label')
+                    ->label(__('packstub-form-builder::form-builder.share.label'))
+                    ->placeholder(__('packstub-form-builder::form-builder.share.label_placeholder'))
+                    ->maxLength(255)
+                    ->visible($record->isPrivate()),
                 DateTimePicker::make('expires_at')
                     ->label(__('packstub-form-builder::form-builder.share.expires_at'))
                     ->helperText(__('packstub-form-builder::form-builder.share.expires_at_hint'))
                     ->native()
-                    ->live()
                     ->visible($record->isPrivate()),
+                TextInput::make('max_submissions')
+                    ->label(__('packstub-form-builder::form-builder.share.max_submissions'))
+                    ->helperText(__('packstub-form-builder::form-builder.share.max_submissions_hint'))
+                    ->integer()
+                    ->minValue(1)
+                    // Counted from stored submissions.
+                    ->visible($record->isPrivate() && $record->store_submissions),
                 DateTimePicker::make('opens_at')
                     ->label(__('packstub-form-builder::form-builder.fields.opens_at'))
                     ->native(),
@@ -101,16 +121,47 @@ class FormActions
                     'closes_at' => $data['closes_at'] ?? null,
                 ]);
 
-                $link = static::linkFor($record, $data['expires_at'] ?? null);
+                if (! $record->isPrivate()) {
+                    Notification::make()
+                        ->title($record->pageUrl() ?? __('packstub-form-builder::form-builder.share.link'))
+                        ->success()
+                        ->send();
+
+                    return;
+                }
+
+                $link = static::createShareLink($record, $data);
 
                 Notification::make()
-                    ->title($link ?? __('packstub-form-builder::form-builder.share.link'))
+                    ->title(__('packstub-form-builder::form-builder.share.created'))
+                    ->body($link->url())
                     ->success()
+                    ->persistent()
                     ->send();
             })
             ->visible(fn (Form $record): bool => $record->pageUrl() !== null);
     }
 
+    /**
+     * @param  array<string, mixed>  $data  label, expires_at, max_submissions
+     */
+    public static function createShareLink(Form $form, array $data): ShareLink
+    {
+        /** @var ShareLink $link */
+        $link = $form->shareLinks()->create([
+            'label' => filled($data['label'] ?? null) ? (string) $data['label'] : null,
+            'expires_at' => filled($data['expires_at'] ?? null) ? Carbon::parse($data['expires_at']) : null,
+            'max_submissions' => filled($data['max_submissions'] ?? null) ? max(1, (int) $data['max_submissions']) : null,
+            'user_id' => auth()->id(),
+        ]);
+
+        return $link;
+    }
+
+    /**
+     * The public link, or for a private form a signed link to the hosted
+     * page (kept from 1.2; the Share action now creates share links).
+     */
     public static function linkFor(Form $form, mixed $expiresAt): ?string
     {
         if (! $form->isPrivate()) {

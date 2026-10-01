@@ -4,15 +4,21 @@ namespace Packstub\FormBuilder;
 
 use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
+use Packstub\FormBuilder\Contracts\ChoiceSource;
 use Packstub\FormBuilder\Contracts\SubmissionSink;
+use Packstub\FormBuilder\Fields\ChoiceSources;
 use Packstub\FormBuilder\Fields\FieldType;
 use Packstub\FormBuilder\Fields\FieldTypeRegistry;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\FormSubmission;
+use Packstub\FormBuilder\Models\ShareLink;
 use Packstub\FormBuilder\Models\WebhookDelivery;
+use Packstub\FormBuilder\Submissions\ProtectionToken;
 use Packstub\FormBuilder\Submissions\SubmissionContext;
 use Packstub\FormBuilder\Submissions\SubmissionResult;
 use Packstub\FormBuilder\Submissions\Submitter;
+use Packstub\FormBuilder\Testing\FormBuilderFake;
 
 class FormBuilder
 {
@@ -37,6 +43,41 @@ class FormBuilder
     public static function webhookDeliveryModel(): string
     {
         return config('packstub-form-builder.models.webhook_delivery', WebhookDelivery::class);
+    }
+
+    /** @return class-string<ShareLink> */
+    public static function shareLinkModel(): string
+    {
+        return config('packstub-form-builder.models.share_link', ShareLink::class);
+    }
+
+    // ------------------------------------------------------------------
+    // Ownership
+    // ------------------------------------------------------------------
+
+    /**
+     * The user whose forms the Forms resource is limited to (config
+     * "ownership.only_own"), or null when everyone sees every form.
+     */
+    public static function restrictedToOwner(): int|string|null
+    {
+        if (! config('packstub-form-builder.ownership.only_own', false)) {
+            return null;
+        }
+
+        $user = auth()->user();
+
+        if ($user === null) {
+            return null;
+        }
+
+        $ability = config('packstub-form-builder.ownership.see_all');
+
+        if (is_string($ability) && $ability !== '' && Gate::forUser($user)->allows($ability)) {
+            return null;
+        }
+
+        return $user->getAuthIdentifier();
     }
 
     // ------------------------------------------------------------------
@@ -107,6 +148,24 @@ class FormBuilder
     }
 
     /**
+     * Register a choice source: choice fields can take their options from it
+     * (the builder's "Options" select) instead of a typed list.
+     *
+     * @param  \Closure|ChoiceSource|array<int|string, string>|class-string<ChoiceSource>  $source  A closure receives the Field and returns value => label.
+     */
+    public function choices(string $name, \Closure|ChoiceSource|array|string $source, ?string $label = null): static
+    {
+        app(ChoiceSources::class)->add($name, $source, $label);
+
+        return $this;
+    }
+
+    public function choiceSources(): ChoiceSources
+    {
+        return app(ChoiceSources::class);
+    }
+
+    /**
      * @param  array<int, class-string<SubmissionSink>|SubmissionSink>  $sinks
      */
     public function sink(array|string|SubmissionSink $sinks): static
@@ -150,6 +209,30 @@ class FormBuilder
         return is_int($form) || ctype_digit((string) $form)
             ? $model::query()->find($form)
             : $model::query()->where('slug', $form)->first();
+    }
+
+    /**
+     * Input that passes the time trap and the token check for the form, with
+     * your values: post it in a test (the honeypot stays empty).
+     *
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
+     */
+    public function validInput(Form|string|int $form, array $values = []): array
+    {
+        $form = $this->find($form) ?? throw new \InvalidArgumentException('Unknown form.');
+        $tokens = app(ProtectionToken::class);
+
+        return [...$values, $tokens->field() => $tokens->make($form)];
+    }
+
+    /**
+     * Whether FormBuilder::fake() is on: the side effects of a submission
+     * (emails, notifications, webhooks, channel messages, sinks) are skipped.
+     */
+    public static function faking(): bool
+    {
+        return app(self::class) instanceof FormBuilderFake;
     }
 
     /**

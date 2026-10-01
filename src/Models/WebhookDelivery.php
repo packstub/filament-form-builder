@@ -69,4 +69,14 @@ class WebhookDelivery extends Model
     {
         return $this->status === self::DELIVERED;
     }
+
+    /**
+     * Whether the delivery is a message to a chat channel (event
+     * "channel.slack" / "channel.discord" / "channel.teams") rather than
+     * the form's webhook.
+     */
+    public function isChannelMessage(): bool
+    {
+        return str_starts_with((string) $this->event, 'channel.');
+    }
 }

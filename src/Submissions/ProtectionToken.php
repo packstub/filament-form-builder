@@ -12,17 +12,38 @@ use Packstub\FormBuilder\Models\Form;
  * The time-trap token: an encrypted "form id + rendered at + nonce" triple
  * that the form carries in a hidden input, so a submission posted too
  * quickly after the render (a bot) can be told apart, and a token cannot
- * be replayed for a second submission.
+ * be replayed for a second submission. A form rendered through a share link
+ * carries the link's token in it too, so a private form only takes
+ * submissions from a render the server made, through a link still active.
  */
 class ProtectionToken
 {
-    public function make(Form $form, ?int $renderedAt = null): string
+    public function make(Form $form, ?int $renderedAt = null, ?string $link = null): string
     {
-        return Crypt::encryptString(json_encode([
+        return Crypt::encryptString(json_encode(array_filter([
             'f' => $form->getKey(),
             't' => $renderedAt ?? time(),
             'n' => Str::random(12),
-        ], JSON_THROW_ON_ERROR));
+            'l' => $link,
+        ], fn (mixed $value): bool => $value !== null), JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * Whether the token was issued for this form (not tampered with).
+     */
+    public function isValid(Form $form, mixed $token): bool
+    {
+        return $this->payload($form, $token) !== null;
+    }
+
+    /**
+     * The token of the share link the form was rendered through, if any.
+     */
+    public function link(Form $form, mixed $token): ?string
+    {
+        $link = $this->payload($form, $token)['l'] ?? null;
+
+        return is_string($link) && $link !== '' ? $link : null;
     }
 
     /**

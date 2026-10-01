@@ -16,13 +16,15 @@ Every accepted submission is stored (unless the form's **Store submissions** is 
 
 ## In the panel
 
-The **Submissions** relation manager on the form's edit page lists them newest first: the number, the date, a summary, and **one column per field** (the first two shown, the rest toggleable), each searchable and sortable. Filters: unread, and one per field of a choice, boolean or date type. Opening one shows every value (copyable; uploaded files as download links; rich text rendered) and the details, and marks it read. **Edit** changes the values in a slide-over with the same Filament components as the Livewire renderer. Bulk actions mark as read, export or delete.
+The **Submissions** relation manager on the form's edit page lists them newest first: the number, the date, a summary, and **one column per field** (the first two shown, the rest toggleable), each searchable and sortable. Filters: unread, one per field of a choice, boolean or date type, and the share link on a form that has some. Opening one shows every value (copyable; uploaded files as download links; rich text rendered) and the details, and marks it read. **Edit** changes the values in a slide-over with the same Filament components as the Livewire renderer. Bulk actions mark as read, export or delete.
 
 ![The Submissions table under a form: unread envelopes, received date, a summary of the values, the page, and the Export CSV action](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/submissions.png)
 
 ![A submission opened in a slide-over: every value with its label, copyable, and a collapsed details section](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/submission.png)
 
-**Export CSV** downloads the filtered list: the number, the id, the date, the form's fields (hidden ones included), then any key an older submission still has, then the page, IP and user. **Export Excel** appears when [OpenSpout](https://github.com/openspout/openspout) is installed (Filament's export action brings it; otherwise `composer require openspout/openspout`).
+**Export CSV** downloads the filtered list: the number, the id, the date, the form's fields (hidden ones included; an address gets a column per part), then any key an older submission still has, then the page, IP and user. **Export Excel** appears when [OpenSpout](https://github.com/openspout/openspout) is installed (Filament's export action brings it; otherwise `composer require openspout/openspout`).
+
+Once a form has submissions, its edit page opens with **Submissions per day**, a bar chart over the last 7, 30 or 90 days with the totals (all time, the last 7 days, unread) above it. It counts the submissions table: no tracking script.
 
 The Forms navigation item shows the unread count (`navigationBadge(false)` to hide it).
 

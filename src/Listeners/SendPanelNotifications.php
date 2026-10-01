@@ -5,6 +5,7 @@ namespace Packstub\FormBuilder\Listeners;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Packstub\FormBuilder\Events\SubmissionReceived;
+use Packstub\FormBuilder\FormBuilder;
 use Packstub\FormBuilder\FormBuilderPlugin;
 
 /**
@@ -16,6 +17,10 @@ class SendPanelNotifications
 {
     public function handle(SubmissionReceived $event): void
     {
+        if (FormBuilder::faking()) {
+            return;
+        }
+
         $ids = array_values(array_filter((array) $event->form->setting('notify_users', [])));
 
         if ($ids === [] || ! $event->submission->exists) {

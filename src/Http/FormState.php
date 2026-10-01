@@ -104,9 +104,23 @@ final class FormState
         return $this->errors !== [];
     }
 
+    /**
+     * The first error of a field, or of one of its parts or elements
+     * ("address.city", "tags.0") when the field itself has none.
+     */
     public function error(string $key): ?string
     {
-        return $this->errors[$key][0] ?? null;
+        if (isset($this->errors[$key][0])) {
+            return $this->errors[$key][0];
+        }
+
+        foreach ($this->errors as $name => $messages) {
+            if (str_starts_with((string) $name, $key.'.') && isset($messages[0])) {
+                return $messages[0];
+            }
+        }
+
+        return null;
     }
 
     public function old(string $key, mixed $default = null): mixed

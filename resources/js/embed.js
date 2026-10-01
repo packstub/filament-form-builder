@@ -44,6 +44,16 @@
                 var max = parseInt(opts.max || 5, 10), stars = '';
                 for (var s = 1; s <= max; s++) stars += '<label class="fb-rating__star" for="' + id + '-' + s + '"><input type="radio" id="' + id + '-' + s + '" name="' + esc(field.key) + '" value="' + s + '"><span aria-hidden="true">★</span></label>';
                 return '<div class="fb-rating">' + stars + '</div>';
+            case 'address':
+                var parts = field.parts || {}, required = field.required_parts || [], countries = field.countries || {};
+                var auto = { line1: 'address-line1', line2: 'address-line2', city: 'address-level2', region: 'address-level1', postal_code: 'postal-code', country: 'country' };
+                return '<div class="fb-address__parts">' + Object.keys(parts).map(function (p) {
+                    var pid = id + '-' + p.replace('_', '-'), name = esc(field.key) + '[' + p + ']', req = required.indexOf(p) >= 0 ? ' required aria-required="true"' : '';
+                    var control = p === 'country'
+                        ? '<select class="fb-input fb-select" id="' + pid + '" name="' + name + '" autocomplete="country"' + req + '><option value="">' + esc(config.strings.select_placeholder) + '</option>' + Object.keys(countries).map(function (c) { return '<option value="' + esc(c) + '">' + esc(countries[c]) + '</option>'; }).join('') + '</select>'
+                        : '<input class="fb-input" type="text" id="' + pid + '" name="' + name + '" autocomplete="' + auto[p] + '"' + req + '>';
+                    return '<div class="fb-address__part fb-address__part--' + p.replace('_', '-') + '"><label class="fb-sublabel" for="' + pid + '">' + esc(parts[p]) + '</label>' + control + '</div>';
+                }).join('') + '</div>';
             case 'file':
                 return '<input class="fb-input fb-file" type="file" id="' + id + '" name="' + esc(field.key) + '[]"' + (opts.multiple ? ' multiple' : '') + '>';
             case 'hidden':
@@ -63,7 +73,7 @@
     function render(container, def) {
         var id = 'form-' + def.slug;
         var noLabel = ['checkbox', 'consent', 'toggle', 'hidden', 'heading', 'paragraph', 'divider'];
-        var fieldset = ['radio', 'toggle_buttons', 'checkboxes', 'rating'];
+        var fieldset = ['radio', 'toggle_buttons', 'checkboxes', 'rating', 'address'];
         var html = '<div id="' + id + '" class="fb-form' + (def.mode === 'wizard' ? ' fb-form--wizard' : '') + (def.layout === 'horizontal' ? ' fb-form--horizontal' : '') + '" data-fb-form="' + esc(def.slug) + '">';
         if (!def.accepting) { container.innerHTML = html + '<div class="fb-closed" role="status">' + esc(def.closed_reason) + '</div></div>'; return; }
         html += '<form method="post" action="' + esc(def.submit_url) + '" class="fb-form__form" novalidate data-fb-enhance="true" enctype="multipart/form-data" data-fb-message-invalid="' + esc(config.strings.invalid) + '" data-fb-message-failed="' + esc(config.strings.failed) + '" data-fb-step-of="' + esc(config.strings.step_of) + '">';
