@@ -7,10 +7,11 @@ All notable changes to `packstub/filament-form-builder` are documented here.
 ### Added
 
 - **Rating with packstub/filament-rating** (#14): when the package is installed, the Rating field uses its star input in the Livewire renderer and the preview, a star column with the average and the distribution in the submissions table, a "4 stars & up" filter and stars in the submission details. The star column sorts by the score as a number (10 after 9, also on MySQL and Postgres). Detected, never required; the stored score is unchanged, so installing or removing the package changes only how ratings look. A field type can give its own details entry with `detailEntry()`.
+- **Choices in columns**: radio buttons and a checkbox list lay their choices out in up to four columns (**Columns** on the field), in the Blade and the Livewire renderers and the panel; one column on small screens. Stored in the field's options, so the JSON definition carries it too.
 
 ### Changed
 
-- **Docs**: a shorter Features list in the README and on the docs index, one line per area; the field types sit in a table under Building a form. Screenshots of the star input and the star column (`rating-input.png`, `rating-submissions.png`) under With packstub/filament-rating; the Livewire screenshot shows a rating field.
+- **Docs**: a shorter Features list in the README and on the docs index, one line per area; the field types sit in a table under Building a form. Screenshots of the star input and the star column (`rating-input.png`, `rating-submissions.png`) under With packstub/filament-rating; the Livewire screenshot shows a rating field and the ticket and workshop choices in two columns; the star column screenshot without the Summary and answer columns, one line per row.
 
 ## 1.3.0 — 2026-10-01
 

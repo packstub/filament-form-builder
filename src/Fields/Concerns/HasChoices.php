@@ -44,7 +44,31 @@ trait HasChoices
                 ->required($manual)
                 ->visible($manual)
                 ->columnSpanFull(),
+            ...($this->hasChoiceColumns() ? [
+                Select::make('columns')
+                    ->label(__('packstub-form-builder::form-builder.editor.choice_columns'))
+                    ->helperText(__('packstub-form-builder::form-builder.editor.choice_columns_hint'))
+                    ->options(array_combine(range(1, 4), array_map('strval', range(1, 4))))
+                    ->default(1)
+                    ->selectablePlaceholder(false),
+            ] : []),
         ];
+    }
+
+    /**
+     * Whether the choices can be laid out in several columns (radio buttons, checkbox list).
+     */
+    public function hasChoiceColumns(): bool
+    {
+        return false;
+    }
+
+    /**
+     * The number of columns the choices are laid out in, from 1 to 4.
+     */
+    public function choiceColumns(Field $field): int
+    {
+        return $this->hasChoiceColumns() ? max(1, min(4, (int) ($field->option('columns') ?: 1))) : 1;
     }
 
     /**

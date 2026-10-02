@@ -22,11 +22,11 @@ Open **Forms**, create one, and add fields from the block picker on the **Fields
 | Rich text | HTML (safe tags only) | Rows; a rich editor in the Livewire renderer, a text area elsewhere |
 | Dropdown | one choice | Choices (value → label) |
 | Multi-select | list of choices | Choices |
-| Radio buttons | one choice | Choices |
+| Radio buttons | one choice | Choices, in up to four columns |
 | Toggle buttons | one choice | Choices, shown as a row of buttons |
 | Checkbox | true / false | Required means it must be ticked |
 | Toggle | true / false | A switch; same value as a checkbox |
-| Checkbox list | list of choices | Choices |
+| Checkbox list | list of choices | Choices, in up to four columns |
 | Tags | list of strings | Maximum number; comma-separated in the plain renderer |
 | Rating | 1 to N | The scale (1 to 10); stars in the panel with [packstub/filament-rating](#with-packstubfilament-rating) |
 | Date | `Y-m-d` | Earliest and latest date |
