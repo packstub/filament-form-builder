@@ -17,15 +17,15 @@ Build forms in your Filament panel, put them on your site with one Blade tag, a 
 
 ## Features
 
-- **[Builder in the panel](#building-a-form)** — a Forms resource with 29 field types: text, email, phone, URL, number, amount, long text, rich text, dropdown, multi-select, radio buttons, toggle buttons, checkbox, toggle, checkbox list, tags, rating, date, date and time, time, file upload, colour, country, address, consent, hidden, heading, paragraph and divider. Choice fields take their options from a typed list or from your own data (`FormBuilder::choices()`). Every field has a label, key, placeholder, help text, default, required flag, a width on a twelve-column grid, rules picked from a list, a custom error message and any extra Laravel rule you type in. A live preview, twenty templates, duplicate, JSON export and import.
-- **[Conditions and steps](#conditions-and-steps)** — show, hide or require a field or a section when other answers match (eight operators, all or any), applied live in the browser and enforced on the server. Sections group fields into cards or into the steps of a multi-step form with a progress bar and per-step validation.
-- **[Five ways to render](#rendering-a-form)** — a plain Blade component that works on cached and session-less pages, a Livewire component with Filament fields and in-place validation, a JSON API for SPAs and mobile apps, an iframe and a script embed for any other site. All go through the same validation and storage. Prefill from the page URL, custom CSS and JavaScript per form, a brand colour, labels beside the fields.
-- **[Submissions](#submissions)** — numbered, stored with the values, the page they came from and the labels at the time, listed per form with a column per field, filters per field, a details slide-over with file downloads, an edit slide-over, read / unread state, bulk actions, CSV and Excel exports, a retention command, a submissions-per-day chart. Unread counts on the navigation item.
-- **[Notifications and webhooks](#notifications-and-webhooks)** — an email per submission with from, reply-to, CC, BCC, a subject with merge tags and the uploaded files attached; a confirmation to the visitor with merge tags; Filament panel notifications to chosen users; Slack, Discord and Microsoft Teams messages; your logo and brand colour on the emails; a signed webhook per form with a delivery log and retries; a `SubmissionReceived` event and a `SubmissionSink` contract.
-- **[Spam protection](#spam-protection)** — a honeypot, a single-use time-trap token, a per-IP rate limit, word, email-domain and IP blocklists, allowed origins, and Turnstile, hCaptcha or reCAPTCHA v3 when you want a captcha. Bots see the success message; nothing is stored.
-- **[Access and limits](#settings)** — a success message or a redirect, published or not, an opening and closing date, private forms opened only by share links you can label, expire, cap and revoke one by one, a password, a login requirement, one submission per person, a maximum number of submissions, and a "do not store" mode.
-- **[Extensible](#extending)** — write a field type class with its own settings, rules, views, column and filter; swap the models and table names; scope forms to a tenant; submit from code with `FormBuilder::submit()`; render a form from an array; test with `FormBuilder::fake()`; limit editors to the forms they created.
-- **[Themeable and translatable](#theming)** — the Blade renderer uses CSS variables with sensible defaults and ships its own small stylesheet; every string lives in a language file.
+- **[Builder in the panel](#building-a-form)**: 29 field types, a live preview, twenty templates, JSON import and export.
+- **[Conditions and steps](#conditions-and-steps)**: show, hide or require fields based on other answers, and split long forms into steps.
+- **[Render it anywhere](#rendering-a-form)**: Blade, Livewire, a JSON API, an iframe or a script embed, all through the same validation.
+- **[Submissions in the panel](#submissions)**: a column and a filter per field, read / unread state, CSV and Excel export, a daily chart.
+- **[Notifications](#notifications-and-webhooks)**: emails to you and the visitor, panel notifications, Slack, Discord, Teams and signed webhooks.
+- **[Spam protection without a captcha](#spam-protection)**: honeypot, time trap, rate limit and blocklists, with Turnstile, hCaptcha or reCAPTCHA when you want one.
+- **[Access and limits](#settings)**: opening dates, passwords, login, private share links, submission caps.
+- **[Extensible](#extending)**: your own field types, models and sinks, tenant scoping, testing helpers.
+- **[Themeable and translatable](#theming)**: CSS variables and a language file for every string.
 
 ## Compatibility
 
@@ -61,6 +61,18 @@ Create a form, give it a name, and add fields from the block picker, or start fr
 ![The Fields tab: one collapsible block per field, the Message block open with its label, key, placeholder, rows, required flag and extra rules](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/builder.png)
 
 ![The block picker with the built-in field types](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/field-picker.png)
+
+| Kind | Field types |
+| --- | --- |
+| Text | Text, email, phone, URL, long text, rich text, hidden |
+| Numbers | Number, amount, rating |
+| Choices | Dropdown, multi-select, radio buttons, toggle buttons, checkbox list, tags, country |
+| Yes / no | Checkbox, toggle, consent |
+| Dates | Date, date and time, time |
+| Other | File upload, colour, address |
+| Layout | Heading, paragraph, divider |
+
+Choice fields take a typed list or options from your own data (`FormBuilder::choices()`). Every field has a label, key, placeholder, help text, default, required flag, a width on a twelve-column grid, rules picked from a list, a custom error message and extra Laravel rules. What each type stores and its own settings: [Building forms](docs/building-forms.md#field-types).
 
 The **Settings** tab holds the submit button label, the success message or a redirect URL, whether submissions are stored, the availability window, the visibility, password, login and per-person limits and the spam settings. **Notifications** holds the emails, the panel notifications and the webhook; **Design** the display mode, the steps, the hosted page and the styling; **Embed** the snippets for the form you are editing.
 

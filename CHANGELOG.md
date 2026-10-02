@@ -2,6 +2,12 @@
 
 All notable changes to `packstub/filament-form-builder` are documented here.
 
+## Unreleased
+
+### Changed
+
+- **Docs**: a shorter Features list in the README and on the docs index, one line per area; the field types sit in a table under Building a form.
+
 ## 1.3.0 — 2026-10-01
 
 Upgrading: run `php artisan vendor:publish --tag=packstub-form-builder-migrations` and `php artisan migrate` (a guarded migration adds the share links table, the link on submissions and the owner of a form). Share links answer at `/f/{token}`: exclude `f` from a catch-all route, or change `routes.share_prefix`. Signed share links from 1.2 keep working. A headless client posting to a private form sends back the protection token from the definition endpoint (`protection.token`). Nothing else changes for existing forms.
