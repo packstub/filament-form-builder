@@ -8,6 +8,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Infolists\Components\Entry;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
@@ -222,8 +223,11 @@ class SubmissionsRelationManager extends RelationManager
             $column
                 ->label($field->label)
                 ->searchable(query: fn (Builder $query, string $search): Builder => $query->where('data->'.$field->key, 'like', "%{$search}%"))
-                ->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderBy('data->'.$field->key, $direction))
                 ->toggleable(isToggledHiddenByDefault: $index >= 2);
+
+            if (! $column->isSortable()) {
+                $column->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderBy('data->'.$field->key, $direction));
+            }
 
             $columns[] = $column;
             $index++;
@@ -327,8 +331,13 @@ class SubmissionsRelationManager extends RelationManager
 
         return [
             Section::make(__('packstub-form-builder::form-builder.submissions.data'))
-                ->schema($rows->map(function (array $row, string $key) use ($record): TextEntry {
+                ->schema($rows->map(function (array $row, string $key) use ($record): Entry {
                     $field = $record->fieldFor($key);
+
+                    if (($custom = $field->type->detailEntry($field)) !== null) {
+                        return $custom->label($row['label']);
+                    }
+
                     $entry = TextEntry::make('data.'.$key)->label($row['label']);
 
                     if ($field->type::id() === 'file') {

@@ -112,3 +112,16 @@ it('scopes every stylesheet rule under .fb-form', function (): void {
         }
     }
 });
+
+it('lays radio buttons and a checkbox list out in columns', function (): void {
+    contactForm(['fields' => [
+        field('radio', 'Ticket', ['choices' => ['a' => 'A', 'b' => 'B'], 'columns' => 2]),
+        field('checkboxes', 'Workshops', ['choices' => ['a' => 'A', 'b' => 'B'], 'columns' => '9']),
+        field('radio', 'Plain', ['choices' => ['a' => 'A']]),
+    ]]);
+
+    $html = $this->get('/contact-us')->assertOk()->getContent();
+
+    expect($html)
+        ->toContain('<div class="fb-choices fb-choices--columns" style="--fb-choice-columns: 2">', 'style="--fb-choice-columns: 4"', '<div class="fb-choices">', '.fb-choices--columns{');
+});

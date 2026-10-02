@@ -72,7 +72,7 @@ Create a form, give it a name, and add fields from the block picker, or start fr
 | Other | File upload, colour, address |
 | Layout | Heading, paragraph, divider |
 
-Choice fields take a typed list or options from your own data (`FormBuilder::choices()`). Every field has a label, key, placeholder, help text, default, required flag, a width on a twelve-column grid, rules picked from a list, a custom error message and extra Laravel rules. What each type stores and its own settings: [Building forms](docs/building-forms.md#field-types).
+Choice fields take a typed list or options from your own data (`FormBuilder::choices()`). Every field has a label, key, placeholder, help text, default, required flag, a width on a twelve-column grid, rules picked from a list, a custom error message and extra Laravel rules. What each type stores and its own settings: [Building forms](docs/building-forms.md#field-types). With [packstub/filament-rating](https://github.com/packstub/filament-rating) installed, the rating field shows stars in the panel and the Livewire renderer, and its submissions column gets an average, a distribution and a filter.
 
 The **Settings** tab holds the submit button label, the success message or a redirect URL, whether submissions are stored, the availability window, the visibility, password, login and per-person limits and the spam settings. **Notifications** holds the emails, the panel notifications and the webhook; **Design** the display mode, the steps, the hosted page and the styling; **Embed** the snippets for the form you are editing.
 
@@ -123,7 +123,7 @@ The fields as Filament components, validated in place. Nothing else to add to th
 
 Custom field types that render other Filament components (a repeater, a slider) need their CSS: point `frontend.livewire_theme` at the panel theme `filament:assets` publishes (`css/filament/filament/app.css`) or at a theme of your own, and every component is covered.
 
-![A registration form rendered by the Livewire component: headings, radio buttons, a checkbox list, a date picker and a terms checkbox](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/site-livewire.png)
+![A registration form rendered by the Livewire component: headings, radio buttons, a checkbox list, a date picker, a star rating and a terms checkbox](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/site-livewire.png)
 
 Read more: [Rendering](https://packstub.dev/docs/filament-form-builder/rendering).
 

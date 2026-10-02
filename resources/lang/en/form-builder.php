@@ -238,6 +238,8 @@ return [
         'accepted_types_hint' => 'Comma-separated extensions or MIME types. Empty accepts any.',
         'max_kb' => 'Maximum size (KB)',
         'inline' => 'Show the choices on one line',
+        'choice_columns' => 'Columns',
+        'choice_columns_hint' => 'Lay the choices out in up to four columns; one on small screens.',
         'link_text' => 'Link text',
         'link_url' => 'Link URL',
         'countries' => 'Countries',

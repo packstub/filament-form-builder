@@ -21,6 +21,11 @@ class ToggleButtonsField extends RadioField
         return 'heroicon-o-squares-2x2';
     }
 
+    public function hasChoiceColumns(): bool
+    {
+        return false;
+    }
+
     public function view(): string
     {
         return 'packstub-form-builder::fields.toggle-buttons';

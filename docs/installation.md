@@ -28,7 +28,7 @@ public function panel(Panel $panel): Panel
 | --- | --- | --- | --- |
 | 1.x | 4.x, 5.x | 12.x, 13.x | 8.3+ |
 
-No other package is required. The CSV export, the emails, the webhooks and the spam protection are built in; the Excel export appears when OpenSpout is installed, the captcha when a provider's keys are set, the panel notifications when Filament's database notifications are set up.
+No other package is required. The CSV export, the emails, the webhooks and the spam protection are built in; the Excel export appears when OpenSpout is installed, the captcha when a provider's keys are set, the panel notifications when Filament's database notifications are set up, and the Rating field shows stars in the panel and the Livewire renderer, with an average under its column, when [packstub/filament-rating](building-forms.md#with-packstubfilament-rating) is installed.
 
 The Livewire renderer's stylesheet is a Filament asset: `php artisan filament:assets` publishes it (the `filament:upgrade` script Filament adds to `composer.json` runs that on every update).
 

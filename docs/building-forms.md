@@ -22,13 +22,13 @@ Open **Forms**, create one, and add fields from the block picker on the **Fields
 | Rich text | HTML (safe tags only) | Rows; a rich editor in the Livewire renderer, a text area elsewhere |
 | Dropdown | one choice | Choices (value → label) |
 | Multi-select | list of choices | Choices |
-| Radio buttons | one choice | Choices |
+| Radio buttons | one choice | Choices, in up to four columns |
 | Toggle buttons | one choice | Choices, shown as a row of buttons |
 | Checkbox | true / false | Required means it must be ticked |
 | Toggle | true / false | A switch; same value as a checkbox |
-| Checkbox list | list of choices | Choices |
+| Checkbox list | list of choices | Choices, in up to four columns |
 | Tags | list of strings | Maximum number; comma-separated in the plain renderer |
-| Rating | 1 to N | The scale (1 to 10) |
+| Rating | 1 to N | The scale (1 to 10); stars in the panel with [packstub/filament-rating](#with-packstubfilament-rating) |
 | Date | `Y-m-d` | Earliest and latest date |
 | Date and time | `Y-m-d H:i:s` | Earliest and latest date |
 | Time | `H:i` | — |
@@ -49,6 +49,27 @@ Every input field also has a label, a **key** (derived from the label; the name 
 **Address** asks for a street (two lines), city, state or region, postal code and country in plain inputs with the browser's address autocomplete, and stores them as one object. The table and the emails show it on one line; the CSV and Excel exports give each part its own column.
 
 Keys must be unique within a form; the builder refuses duplicates and the model suffixes a missing one.
+
+### With packstub/filament-rating
+
+**Rating** is stars on the site in every renderer: the Blade one draws them itself, without JavaScript. In the panel and the Livewire renderer it is a row of numbered buttons, until you install [packstub/filament-rating](https://packstub.dev/docs/filament-rating):
+
+```bash
+composer require packstub/filament-rating
+```
+
+Nothing to configure; the plugin detects it. Then:
+
+- the Livewire renderer and the preview show the package's star input (click or keyboard, clearable when the field is optional);
+- the field's column in the submissions table shows stars, sorts by the score, and has the average and the count per score under it, for the filtered rows;
+- a filter offers "4 stars & up" and so on;
+- the submission details show stars with the score.
+
+![A rating field in the Livewire renderer: five stars, four given, and a clear button](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/rating-input.png)
+
+![The submissions of a feedback form: a star column, with the average rating and the count per score under it](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/rating-submissions.png)
+
+The stored value is the same whole number either way, so installing or removing the package changes only how ratings look: existing forms, submissions, exports and emails ("4 / 5") stay as they are. On the site, the package's stylesheet and script come with the rest of Filament's assets (`php artisan filament:assets` publishes them).
 
 ### Choices from your data
 

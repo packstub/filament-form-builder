@@ -65,3 +65,19 @@ it('formats values through the field type', function (): void {
         ->and($checkbox->type->format(true, $checkbox))->toBe('Yes')
         ->and($checkbox->type->format(false, $checkbox))->toBe('No');
 });
+
+it('gives radio buttons and checkbox lists a number of columns, toggle buttons none', function (): void {
+    $registry = app(FieldTypeRegistry::class);
+    $radio = Field::fromArray(field('radio', 'Ticket', ['choices' => ['a' => 'A'], 'columns' => '3']), $registry);
+    $list = Field::fromArray(field('checkboxes', 'Workshops', ['choices' => ['a' => 'A'], 'columns' => 2]), $registry);
+    $plain = Field::fromArray(field('radio', 'Plain', ['choices' => ['a' => 'A']]), $registry);
+    $buttons = Field::fromArray(field('toggle_buttons', 'Size', ['choices' => ['a' => 'A'], 'columns' => 3]), $registry);
+
+    expect($radio->type->choiceColumns($radio))->toBe(3)
+        ->and($radio->type->formComponent($radio)->getColumns('sm'))->toBe(3)
+        ->and($list->type->formComponent($list)->getColumns('sm'))->toBe(2)
+        ->and($plain->type->choiceColumns($plain))->toBe(1)
+        ->and($buttons->type->choiceColumns($buttons))->toBe(1)
+        ->and(collect($registry->get('radio')->editorSchema())->map->getName()->all())->toContain('columns')
+        ->and(collect($registry->get('toggle_buttons')->editorSchema())->map->getName()->all())->not->toContain('columns');
+});

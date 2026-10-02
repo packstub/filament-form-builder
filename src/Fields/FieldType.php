@@ -3,6 +3,7 @@
 namespace Packstub\FormBuilder\Fields;
 
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\Entry;
 use Filament\Schemas\Components\Component;
 use Filament\Tables\Columns\Column;
 use Filament\Tables\Filters\BaseFilter;
@@ -291,6 +292,15 @@ abstract class FieldType
      * A filter for the submissions table, or null for none.
      */
     public function tableFilter(Field $field): ?BaseFilter
+    {
+        return null;
+    }
+
+    /**
+     * An infolist entry for the submission details, or null for the text of
+     * display(). Its state is read from "data.<key>" on the submission.
+     */
+    public function detailEntry(Field $field): ?Entry
     {
         return null;
     }
