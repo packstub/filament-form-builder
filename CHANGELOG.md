@@ -4,6 +4,10 @@ All notable changes to `packstub/filament-form-builder` are documented here.
 
 ## Unreleased
 
+### Added
+
+- **Rating with packstub/filament-rating** (#14): when the package is installed, the Rating field uses its star input in the Livewire renderer and the preview, a star column with the average and the distribution in the submissions table, a "4 stars & up" filter and stars in the submission details. Detected, never required; the stored score is unchanged, so installing or removing the package changes only how ratings look. A field type can give its own details entry with `detailEntry()`.
+
 ### Changed
 
 - **Docs**: a shorter Features list in the README and on the docs index, one line per area; the field types sit in a table under Building a form.

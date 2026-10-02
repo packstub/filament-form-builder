@@ -17,6 +17,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Packstub\FilamentRating\FilamentRatingServiceProvider;
 use Packstub\FormBuilder\FormBuilderServiceProvider;
 use Packstub\FormBuilder\Tests\Fixtures\AdminPanelProvider;
 use Packstub\FormBuilder\Tests\Fixtures\User;
@@ -75,6 +76,7 @@ abstract class TestCase extends Orchestra
             TablesServiceProvider::class,
             WidgetsServiceProvider::class,
             LivewireServiceProvider::class,
+            FilamentRatingServiceProvider::class,
             FormBuilderServiceProvider::class,
             AdminPanelProvider::class,
         ];

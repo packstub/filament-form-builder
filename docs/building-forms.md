@@ -28,7 +28,7 @@ Open **Forms**, create one, and add fields from the block picker on the **Fields
 | Toggle | true / false | A switch; same value as a checkbox |
 | Checkbox list | list of choices | Choices |
 | Tags | list of strings | Maximum number; comma-separated in the plain renderer |
-| Rating | 1 to N | The scale (1 to 10) |
+| Rating | 1 to N | The scale (1 to 10); stars in the panel with [packstub/filament-rating](#with-packstubfilament-rating) |
 | Date | `Y-m-d` | Earliest and latest date |
 | Date and time | `Y-m-d H:i:s` | Earliest and latest date |
 | Time | `H:i` | — |
@@ -49,6 +49,23 @@ Every input field also has a label, a **key** (derived from the label; the name 
 **Address** asks for a street (two lines), city, state or region, postal code and country in plain inputs with the browser's address autocomplete, and stores them as one object. The table and the emails show it on one line; the CSV and Excel exports give each part its own column.
 
 Keys must be unique within a form; the builder refuses duplicates and the model suffixes a missing one.
+
+### With packstub/filament-rating
+
+**Rating** is stars on the site in every renderer: the Blade one draws them itself, without JavaScript. In the panel and the Livewire renderer it is a row of numbered buttons, until you install [packstub/filament-rating](https://packstub.dev/docs/filament-rating):
+
+```bash
+composer require packstub/filament-rating
+```
+
+Nothing to configure; the plugin detects it. Then:
+
+- the Livewire renderer and the preview show the package's star input (click or keyboard, clearable when the field is optional);
+- the field's column in the submissions table shows stars, with the average and the count per score under it, for the filtered rows;
+- a filter offers "4 stars & up" and so on;
+- the submission details show stars with the score.
+
+The stored value is the same whole number either way, so installing or removing the package changes only how ratings look: existing forms, submissions, exports and emails ("4 / 5") stay as they are. On the site, the package's stylesheet and script come with the rest of Filament's assets (`php artisan filament:assets` publishes them).
 
 ### Choices from your data
 
