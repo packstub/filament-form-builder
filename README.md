@@ -123,7 +123,7 @@ The fields as Filament components, validated in place. Nothing else to add to th
 
 Custom field types that render other Filament components (a repeater, a slider) need their CSS: point `frontend.livewire_theme` at the panel theme `filament:assets` publishes (`css/filament/filament/app.css`) or at a theme of your own, and every component is covered.
 
-![A registration form rendered by the Livewire component: headings, radio buttons, a checkbox list, a date picker and a terms checkbox](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/site-livewire.png)
+![A registration form rendered by the Livewire component: headings, radio buttons, a checkbox list, a date picker, a star rating and a terms checkbox](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/site-livewire.png)
 
 Read more: [Rendering](https://packstub.dev/docs/filament-form-builder/rendering).
 

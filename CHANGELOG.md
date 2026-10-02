@@ -10,7 +10,7 @@ All notable changes to `packstub/filament-form-builder` are documented here.
 
 ### Changed
 
-- **Docs**: a shorter Features list in the README and on the docs index, one line per area; the field types sit in a table under Building a form.
+- **Docs**: a shorter Features list in the README and on the docs index, one line per area; the field types sit in a table under Building a form. Screenshots of the star input and the star column (`rating-input.png`, `rating-submissions.png`) under With packstub/filament-rating; the Livewire screenshot shows a rating field.
 
 ## 1.3.0 — 2026-10-01
 

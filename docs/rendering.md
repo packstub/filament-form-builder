@@ -79,7 +79,7 @@ To print the assets yourself, use the same pieces the injection does:
 </body>
 ```
 
-![A registration form rendered by the Livewire component: headings, radio buttons, a checkbox list, a date picker and a terms checkbox](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/site-livewire.png)
+![A registration form rendered by the Livewire component: headings, radio buttons, a checkbox list, a date picker, a star rating and a terms checkbox](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/site-livewire.png)
 
 ## JSON
 

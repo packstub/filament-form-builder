@@ -65,6 +65,10 @@ Nothing to configure; the plugin detects it. Then:
 - a filter offers "4 stars & up" and so on;
 - the submission details show stars with the score.
 
+![A rating field in the Livewire renderer: five stars, four given, and a clear button](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/rating-input.png)
+
+![The submissions of a feedback form: a star column, with the average rating and the count per score under it](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/rating-submissions.png)
+
 The stored value is the same whole number either way, so installing or removing the package changes only how ratings look: existing forms, submissions, exports and emails ("4 / 5") stay as they are. On the site, the package's stylesheet and script come with the rest of Filament's assets (`php artisan filament:assets` publishes them).
 
 ### Choices from your data
