@@ -119,6 +119,18 @@ it('shows stars, the average, the distribution and a filter in the submissions t
         ->not->toContain('9 / 10');
 });
 
+it('sorts the star column by the score as a number', function (): void {
+    $ten = rate($this->form, 10);
+    $two = rate($this->form, 2);
+    $nine = rate($this->form, 9);
+
+    livewire(SubmissionsRelationManager::class, ['ownerRecord' => $this->form, 'pageClass' => EditForm::class])
+        ->sortTable('data.score')
+        ->assertCanSeeTableRecords([$two, $nine, $ten], inOrder: true)
+        ->sortTable('data.score', 'desc')
+        ->assertCanSeeTableRecords([$ten, $nine, $two], inOrder: true);
+});
+
 it('submits stars from the Livewire renderer', function (): void {
     livewire(FormBuilderForm::class, ['form' => 'survey'])
         ->assertFormFieldExists('score', fn ($component): bool => $component instanceof Rating)

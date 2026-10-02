@@ -61,7 +61,7 @@ composer require packstub/filament-rating
 Nothing to configure; the plugin detects it. Then:
 
 - the Livewire renderer and the preview show the package's star input (click or keyboard, clearable when the field is optional);
-- the field's column in the submissions table shows stars, with the average and the count per score under it, for the filtered rows;
+- the field's column in the submissions table shows stars, sorts by the score, and has the average and the count per score under it, for the filtered rows;
 - a filter offers "4 stars & up" and so on;
 - the submission details show stars with the score.
 

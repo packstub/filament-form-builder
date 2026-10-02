@@ -19,7 +19,7 @@ A field type is a class extending `Packstub\FormBuilder\Fields\FieldType`:
 | `normalize(mixed $value, Field $field)` | The stored value |
 | `format(mixed $value, Field $field)` | The value as text (tables, emails, CSV) |
 | `display(mixed $value, Field $field)` | The value in the details view; return an `HtmlString` for HTML |
-| `tableColumn(Field $field)`, `tableFilter(Field $field)` | A column and a filter for the submissions table, or `null` for the defaults |
+| `tableColumn(Field $field)`, `tableFilter(Field $field)` | A column and a filter for the submissions table, or `null` for the defaults; a column you make sortable keeps its own sort |
 | `detailEntry(Field $field)` | An infolist entry for the submission details (its state is `data.<key>`), or `null` for the text of `display()` |
 | `nestedRules(Field $field, bool $required)`, `nestedAttributes(Field $field)` | Rules and names for the parts of a value stored as an object, validated as `key.part` (the address type) |
 | `exportColumns(Field $field)`, `exportValue(mixed $value, Field $field, string $column)` | Split the value into several export columns |

@@ -122,6 +122,7 @@ class RatingField extends FieldType
         return RatingColumn::make('data.'.$field->key)
             ->state(fn (FormSubmission $record): mixed => $record->value($field->key))
             ->stars($this->max($field))
+            ->sortable(query: fn (EloquentBuilder $query, string $direction): EloquentBuilder => $query->orderBy($this->score($query->getQuery(), $field), $direction))
             ->summarize([
                 RatingAverage::make('average')
                     ->query(fn (Builder $query): Builder => $query->whereNotNull($this->score($query, $field)))
@@ -160,8 +161,8 @@ class RatingField extends FieldType
 
     /**
      * The score in the submission's JSON as a number on any database: the
-     * JSON path alone is text on some, which neither averages nor compares
-     * as a number, and MySQL reads a JSON null as the text "null". The
+     * JSON path alone is text on some, which neither averages, compares nor
+     * sorts as a number (10 before 2), and MySQL reads a JSON null as the text "null". The
      * summarizers query it themselves, so Filament does not select the
      * column's name ("data.score") as a database column.
      */
