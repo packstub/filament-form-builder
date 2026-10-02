@@ -8,6 +8,7 @@
 [![Tests](https://img.shields.io/github/actions/workflow/status/packstub/filament-form-builder/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/packstub/filament-form-builder/actions/workflows/tests.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/packstub/filament-form-builder.svg?style=flat-square)](https://packagist.org/packages/packstub/filament-form-builder)
 [![License](https://img.shields.io/packagist/l/packstub/filament-form-builder.svg?style=flat-square)](https://github.com/packstub/filament-form-builder/blob/main/LICENSE.md)
+[![Listed on filamentphp.com](https://img.shields.io/badge/filamentphp.com-listed-fb7185?style=flat-square&logo=filament&logoColor=white)](https://filamentphp.com/plugins/packstub-form-builder)
 [![Sponsor](https://img.shields.io/badge/sponsor-%E2%9D%A4-ea4aaa?style=flat-square&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/icaliman)
 
 </div>
