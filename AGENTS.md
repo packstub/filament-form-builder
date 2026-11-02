@@ -25,7 +25,7 @@ composer lint               # Pint
 
 ## Conventions
 
-- Every change needs a test and a `CHANGELOG.md` line.
+- Every change needs a test and a `CHANGELOG.md` line. A version's section becomes the top of its GitHub release (the workflow appends the merged pull requests), so keep it short and plain: an optional lead sentence, at most ~6 one-line bullets saying what a user gets, method names only when needed to use them; always keep breaking changes (an `**Upgrading:**` line), security fixes, new minimum versions and migrations to run.
 - No hard dependency beyond Filament and `spatie/laravel-package-tools`; anything optional is detected, never required.
 - The Blade renderer must keep working without a session and without JavaScript; the Livewire renderer brings Filament's frontend assets itself and must never reset the host page's styles.
 - Migrations are additive: a schema change lands in `create_*` and in a guarded `add_*` migration; never rename or drop a column inside a major.
