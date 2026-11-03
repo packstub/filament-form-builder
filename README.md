@@ -15,6 +15,8 @@
 
 Build forms in your Filament panel, put them on your site with one Blade tag, a Livewire component or a JSON call, and read the submissions where you already work.
 
+![The Filament Form Builder in the panel: a Rating field picked from the block picker, added to the Contact form and labelled](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/form-builder.gif)
+
 ## Features
 
 - **[Builder in the panel](#building-a-form)**: 29 field types, a live preview, twenty templates, JSON import and export.

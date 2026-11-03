@@ -2,6 +2,8 @@
 
 Forms designed in the panel, rendered on the site with Blade, Livewire, a JSON API or an embed, submissions stored, emailed and exported.
 
+![The Filament Form Builder in the panel: a Rating field picked from the block picker, added to the Contact form and labelled](https://raw.githubusercontent.com/packstub/art/main/filament-form-builder/docs/form-builder.gif)
+
 ## Features
 
 - **[Builder in the panel](building-forms.md)**: 29 field types, a live preview, JSON import and export.
