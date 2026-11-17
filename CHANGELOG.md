@@ -2,6 +2,10 @@
 
 All notable changes to `packstub/filament-form-builder` are documented here.
 
+## Unreleased
+
+- `composer.json`'s homepage points at the package's page on packstub.dev
+
 ## 1.4.0 — 2026-10-02
 
 - With `packstub/filament-rating` installed, Rating fields get a star input, a star column with the average and the distribution, and a stars filter (#14)
