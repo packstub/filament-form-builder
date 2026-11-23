@@ -1,10 +1,10 @@
 @php
-    $customCss = $model->customCss();
+    $customCss = $model->inlineCss();
     $brand = $model->brandColor();
 @endphp
 <div class="fb-form fb-form--livewire {{ $model->layout() === 'horizontal' ? 'fb-form--horizontal' : '' }}" id="form-{{ $model->slug }}" data-fb-form="{{ $model->slug }}" @if ($brand) style="--fb-color-primary: {{ $brand }}" @endif>
     @if ($customCss)
-        <style>{!! preg_replace('~</style~i', '', $customCss) !!}</style>
+        <style>{!! $customCss !!}</style>
     @endif
 
     @if ($submitted)
@@ -58,6 +58,6 @@
     @endif
 
     @if ($model->customJs() && ! $submitted && $error === null && ! $locked)
-        <script>(function (form) { {!! preg_replace('~</script~i', '', $model->customJs()) !!} })(document.getElementById(@json('form-'.$model->slug)));</script>
+        <script>(function (form) { {!! $model->inlineJs() !!} })(document.getElementById(@json('form-'.$model->slug)));</script>
     @endif
 </div>

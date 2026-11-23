@@ -1,9 +1,13 @@
 <?php
 
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Packstub\FormBuilder\Filament\Resources\FormResource;
+use Packstub\FormBuilder\Filament\Resources\FormResource\Pages\EditForm;
 use Packstub\FormBuilder\Models\Form;
+
+use function Pest\Livewire\livewire;
 
 beforeEach(function (): void {
     Route::middleware('web')->get('/contact-us', fn () => Blade::render('<x-form-builder::form form="contact" />'));
@@ -86,3 +90,88 @@ it('describes the protection in the definition', function (): void {
         ->and($json['layout'])->toBe('stacked')
         ->and($json['fields'][0]['section'])->toBe('section_1');
 });
+
+it('prints no custom code when the config turns it off', function (string $key, string $kept, string $dropped): void {
+    config()->set("packstub-form-builder.frontend.{$key}", false);
+    $form = contactForm(['settings' => [
+        'custom_css' => '.fb-form .fb-submit { border-radius: 999px }',
+        'custom_js' => "form.dataset.ready = '1';",
+    ]]);
+
+    expect($this->get('/forms/contact')->assertOk()->getContent())->toContain($kept)->not->toContain($dropped)
+        ->and(Blade::render('<x-form-builder::form form="contact" />'))->toContain($kept)->not->toContain($dropped);
+
+    livewire('form-builder', ['form' => $form])->assertSeeHtml($kept)->assertDontSeeHtml($dropped);
+})->with([
+    'css' => ['custom_css', "form.dataset.ready = '1';", '.fb-submit { border-radius: 999px }'],
+    'js' => ['custom_js', '.fb-submit { border-radius: 999px }', "form.dataset.ready = '1';"],
+]);
+
+it('takes the custom code fields off the editor when the config turns them off', function (): void {
+    Filament::setCurrentPanel('admin');
+    $this->actingAs(createUser());
+    $form = contactForm(['settings' => ['custom_css' => '.fb-form { color: red }', 'custom_js' => 'form.hidden = true;']]);
+
+    livewire(EditForm::class, ['record' => $form->getRouteKey()])
+        ->assertFormFieldVisible('settings.custom_css')
+        ->assertFormFieldVisible('settings.custom_js');
+
+    config()->set('packstub-form-builder.frontend.custom_js', false);
+
+    livewire(EditForm::class, ['record' => $form->getRouteKey()])
+        ->assertFormFieldVisible('settings.custom_css')
+        ->assertFormFieldHidden('settings.custom_js')
+        ->fillForm(['name' => 'Renamed'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($form->refresh()->name)->toBe('Renamed')
+        ->and($form->customCss())->toBe('.fb-form { color: red }')
+        ->and($form->customJs())->toBeNull()
+        // Saved without the field: the stored code is gone, not kept out of sight.
+        ->and($form->setting('custom_js'))->toBeNull();
+});
+
+it('keeps custom CSS inside its style element', function (): void {
+    $form = contactForm(['settings' => [
+        'custom_css' => '.fb-form::after { content: "<b>" } </st</styleyle><img src=x onerror=alert(1)>',
+    ]]);
+
+    foreach ([
+        $this->get('/forms/contact')->assertOk()->getContent(),
+        Blade::render('<x-form-builder::form form="contact" />'),
+        livewire('form-builder', ['form' => $form])->html(),
+    ] as $html) {
+        expect($html)->not->toContain('<img src=x')
+            ->toContain('content: "\3C b>"')
+            ->toContain('\3C /st\3C /styleyle>\3C img src=x onerror=alert(1)>');
+    }
+});
+
+it('keeps custom JavaScript inside its script element', function (): void {
+    $form = contactForm(['settings' => [
+        'custom_js' => "form.dataset.tag = '</script><img src=x onerror=alert(1)>';",
+    ]]);
+
+    foreach ([
+        Blade::render('<x-form-builder::form form="contact" />'),
+        livewire('form-builder', ['form' => $form])->html(),
+    ] as $html) {
+        expect($html)->not->toContain('</script><img')
+            ->toContain("form.dataset.tag = '<\\/script><img src=x onerror=alert(1)>';");
+    }
+});
+
+it('turns custom JavaScript off by default with tenancy', function (?bool $setting, bool $printed): void {
+    $this->rebootWith([
+        'packstub-form-builder.tenancy.enabled' => true,
+        'packstub-form-builder.frontend.custom_js' => $setting,
+    ]);
+    $form = contactForm(['settings' => ['custom_js' => "form.dataset.ready = '1';"]]);
+
+    expect(str_contains(Blade::render('<x-form-builder::form form="contact" />'), "form.dataset.ready = '1';"))->toBe($printed)
+        ->and($form->customJs() !== null)->toBe($printed);
+})->with([
+    'default' => [null, false],
+    'turned on' => [true, true],
+]);

@@ -9,6 +9,7 @@ use Filament\FilamentServiceProvider;
 use Filament\Forms\FormsServiceProvider;
 use Filament\Infolists\InfolistsServiceProvider;
 use Filament\Notifications\NotificationsServiceProvider;
+use Filament\PanelProvider;
 use Filament\Schemas\SchemasServiceProvider;
 use Filament\Support\SupportServiceProvider;
 use Filament\Tables\TablesServiceProvider;
@@ -33,6 +34,13 @@ abstract class TestCase extends Orchestra
      */
     public static array $bootConfig = [];
 
+    /**
+     * The panel the application boots with. Set through rebootWith().
+     *
+     * @var class-string<PanelProvider>
+     */
+    public static string $panelProvider = AdminPanelProvider::class;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -43,6 +51,7 @@ abstract class TestCase extends Orchestra
     protected function tearDown(): void
     {
         static::$bootConfig = [];
+        static::$panelProvider = AdminPanelProvider::class;
 
         parent::tearDown();
     }
@@ -51,10 +60,12 @@ abstract class TestCase extends Orchestra
      * Re-create the application with extra config pinned before it boots.
      *
      * @param  array<string, mixed>  $config
+     * @param  class-string<PanelProvider>|null  $panelProvider  Another panel than the admin one (TeamPanelProvider: a panel with workspaces).
      */
-    public function rebootWith(array $config): void
+    public function rebootWith(array $config, ?string $panelProvider = null): void
     {
         static::$bootConfig = $config;
+        static::$panelProvider = $panelProvider ?? AdminPanelProvider::class;
 
         $this->reloadApplication();
         $this->migrate();
@@ -78,7 +89,7 @@ abstract class TestCase extends Orchestra
             LivewireServiceProvider::class,
             FilamentRatingServiceProvider::class,
             FormBuilderServiceProvider::class,
-            AdminPanelProvider::class,
+            static::$panelProvider,
         ];
     }
 
@@ -112,6 +123,18 @@ abstract class TestCase extends Orchestra
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+        });
+
+        Schema::create('teams', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->timestamps();
+        });
+
+        Schema::create('team_user', function (Blueprint $table): void {
+            $table->foreignId('team_id');
+            $table->foreignId('user_id');
         });
 
         (include __DIR__.'/../database/migrations/create_form_builder_tables.php.stub')->up();

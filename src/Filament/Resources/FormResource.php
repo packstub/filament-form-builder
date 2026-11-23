@@ -572,12 +572,14 @@ class FormResource extends Resource
                         ->helperText(__('packstub-form-builder::form-builder.fields.custom_css_hint'))
                         ->rows(8)
                         ->maxLength(5000)
+                        ->visible(fn (): bool => FormBuilder::allowsCustomCss())
                         ->extraInputAttributes(['spellcheck' => 'false', 'style' => 'font-family: ui-monospace, monospace']),
                     Textarea::make('settings.custom_js')
                         ->label(__('packstub-form-builder::form-builder.fields.custom_js'))
                         ->helperText(__('packstub-form-builder::form-builder.fields.custom_js_hint'))
                         ->rows(8)
                         ->maxLength(2000)
+                        ->visible(fn (): bool => FormBuilder::allowsCustomJs())
                         ->extraInputAttributes(['spellcheck' => 'false', 'style' => 'font-family: ui-monospace, monospace']),
                 ]),
         ];
@@ -648,17 +650,14 @@ class FormResource extends Resource
     }
 
     /**
+     * The users offered under "Notify in the panel": in a tenant, its
+     * members only (FormBuilder::panelUsers()).
+     *
      * @return array<int|string, string>
      */
     protected static function userOptions(): array
     {
-        $model = config('auth.providers.users.model');
-
-        if (! is_string($model) || ! class_exists($model)) {
-            return [];
-        }
-
-        return $model::query()->limit(500)->get()->mapWithKeys(function (Model $user): array {
+        return app(FormBuilder::class)->panelUsers(FormBuilder::currentTenant())->mapWithKeys(function (Model $user): array {
             $label = $user->getAttribute('name') ?? $user->getAttribute('email') ?? (string) $user->getKey();
 
             return [$user->getKey() => (string) $label];

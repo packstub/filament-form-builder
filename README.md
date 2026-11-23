@@ -173,7 +173,7 @@ Read more: [Submissions](https://packstub.dev/docs/filament-form-builder/submiss
 
 ## Notifications and webhooks
 
-Add addresses to **Notify by email** and each submission is emailed (queued when a queue is configured), with a subject like `[{form_name}] #{submission_number} from {name}`, reply-to set to the visitor, CC, BCC and the uploaded files attached when you ask. **Send a confirmation to the visitor** emails the respondent a Markdown message with the same merge tags. **Notify in the panel** sends a Filament database notification to the users you pick. A **Webhook URL** gets every submission as JSON, signed with Standard Webhooks headers, with a delivery log and retries under the form. For anything else, write a sink:
+Add addresses to **Notify by email** and each submission is emailed (queued when a queue is configured), with a subject like `[{form_name}] #{submission_number} from {name}`, reply-to set to the visitor, CC, BCC and the uploaded files attached when you ask. **Send a confirmation to the visitor** emails the respondent a Markdown message with the same merge tags. **Notify in the panel** sends a Filament database notification to the users you pick (in a panel with tenancy, members of the current tenant). A **Webhook URL** gets every submission as JSON, signed with Standard Webhooks headers, with a delivery log and retries under the form. For anything else, write a sink:
 
 ```php
 use Packstub\FormBuilder\Contracts\SubmissionSink;
@@ -296,6 +296,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `formats.*` | `Y-m-d`, `Y-m-d H:i`, `H:i` | Display formats |
 | `sinks` | `[]` | `SubmissionSink` classes |
 | `frontend.styles`, `frontend.enhance`, `frontend.prefill` | `true` | Inline the stylesheet and the script; prefill from the URL |
+| `frontend.custom_css`, `frontend.custom_js` | `true`, `null` | The form's own CSS and JavaScript (Design tab); `false` takes the field off the editor and prints no stored code. JavaScript is off by default with `tenancy.enabled` |
 | `tenancy.*` | off | Scope forms to a tenant |
 | `navigation.*`, `gate` | — | Navigation group, icon, sort, unread badge; an ability to check |
 

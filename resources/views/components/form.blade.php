@@ -5,8 +5,8 @@
     $wizard = $form->isWizard();
     $sections = $form->sections();
     $hasFiles = $form->inputFields()->contains(fn ($field): bool => $field->type::id() === 'file');
-    $customCss = $form->customCss();
-    $customJs = $form->customJs();
+    $customCss = $form->inlineCss();
+    $customJs = $form->inlineJs();
     $brand = $form->brandColor();
     $strings = \Packstub\FormBuilder\View\Components\Form::strings();
 @endphp
@@ -17,7 +17,7 @@
     @endonce
 @endif
 @if ($customCss)
-    <style {!! $nonce() ? 'nonce="'.$nonce().'"' : '' !!}>{!! preg_replace('~</style~i', '', $customCss) !!}</style>
+    <style {!! $nonce() ? 'nonce="'.$nonce().'"' : '' !!}>{!! $customCss !!}</style>
 @endif
 
 <div id="{{ $formId }}" {{ $attributes->class(['fb-form', 'fb-form--horizontal' => $form->layout() === 'horizontal', 'fb-form--wizard' => $wizard, $class]) }} data-fb-form="{{ $form->slug }}" @if ($brand) style="--fb-color-primary: {{ $brand }}" @endif>
@@ -137,5 +137,5 @@
     @endonce
 @endif
 @if ($customJs && $closed === null && ! $locked && ! $state->success)
-    <script {!! $nonce() ? 'nonce="'.$nonce().'"' : '' !!}>(function (form) { {!! preg_replace('~</script~i', '', $customJs) !!} })(document.getElementById(@json($formId)));</script>
+    <script {!! $nonce() ? 'nonce="'.$nonce().'"' : '' !!}>(function (form) { {!! $customJs !!} })(document.getElementById(@json($formId)));</script>
 @endif

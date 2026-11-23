@@ -4,6 +4,14 @@ All notable changes to `packstub/filament-form-builder` are documented here.
 
 ## Unreleased
 
+A security release for panels with tenancy. Please update.
+
+**Upgrading:** with `tenancy.enabled`, a form's custom JavaScript is off by default; set `frontend.custom_js` to `true` to keep it.
+
+- Security: in a panel with tenancy, **Notify in the panel** offered the users of every workspace, and a picked user got the submission's summary from another workspace; it now offers and notifies the workspace's members only (`tenancy.members` names the relationship)
+- Security: a form's custom CSS could close its `<style>` element and run a script on the page; both renderers now escape it
+- Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
+- Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy
 - `composer.json`'s homepage points at the package's page on packstub.dev
 
 ## 1.4.0 — 2026-10-02

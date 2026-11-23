@@ -3,7 +3,11 @@
 namespace Packstub\FormBuilder;
 
 use Filament\Facades\Filament;
+use Filament\Models\Contracts\HasTenants;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Gate;
 use Packstub\FormBuilder\Contracts\ChoiceSource;
 use Packstub\FormBuilder\Contracts\SubmissionSink;
@@ -24,6 +28,9 @@ class FormBuilder
 {
     /** @var array<int, class-string<SubmissionSink>|SubmissionSink> */
     protected array $sinks = [];
+
+    /** @var (\Closure(Builder<Model>, ?Model): (Builder<Model>|null))|null */
+    protected ?\Closure $panelUsersQuery = null;
 
     public function __construct(protected FieldTypeRegistry $types) {}
 
@@ -97,12 +104,48 @@ class FormBuilder
         return (string) config('packstub-form-builder.tenancy.column', 'tenant_id');
     }
 
-    /** @return class-string<Model>|null */
+    /**
+     * The tenant model: config "tenancy.model", else the one of the panel
+     * that runs the plugin (a panel with ->tenant()).
+     *
+     * @return class-string<Model>|null
+     */
     public static function tenantModel(): ?string
     {
         $model = config('packstub-form-builder.tenancy.model');
 
-        return is_string($model) && $model !== '' ? $model : null;
+        if (is_string($model) && $model !== '') {
+            return $model;
+        }
+
+        if (static::tenantColumn() === null || ! class_exists(Filament::class)) {
+            return null;
+        }
+
+        foreach (Filament::getPanels() as $panel) {
+            if ($panel->hasPlugin(FormBuilderPlugin::ID) && $panel->hasTenancy()) {
+                return $panel->getTenantModel();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The tenant a form belongs to, or null: outside tenancy, for a form
+     * without one, or when the tenant model is not known.
+     */
+    public static function tenantOf(Form $form): ?Model
+    {
+        $column = static::tenantColumn();
+        $model = static::tenantModel();
+        $key = $column !== null ? $form->getAttribute($column) : null;
+
+        if ($model === null || $key === null) {
+            return null;
+        }
+
+        return $model::query()->find($key);
     }
 
     /**
@@ -111,6 +154,34 @@ class FormBuilder
      */
     public static function currentTenantKey(): int|string|null
     {
+        $tenant = static::resolveCurrentTenant();
+
+        if ($tenant instanceof Model) {
+            return $tenant->getKey();
+        }
+
+        return is_int($tenant) || is_string($tenant) ? $tenant : null;
+    }
+
+    /**
+     * The current tenant as a model, or null: outside a tenant, or when the
+     * resolver returns a key and the tenant model is not known.
+     */
+    public static function currentTenant(): ?Model
+    {
+        $tenant = static::resolveCurrentTenant();
+
+        if ($tenant instanceof Model || $tenant === null) {
+            return $tenant;
+        }
+
+        $model = static::tenantModel();
+
+        return $model !== null && (is_int($tenant) || is_string($tenant)) ? $model::query()->find($tenant) : null;
+    }
+
+    protected static function resolveCurrentTenant(): mixed
+    {
         if (static::tenantColumn() === null) {
             return null;
         }
@@ -118,18 +189,135 @@ class FormBuilder
         $resolver = config('packstub-form-builder.tenancy.resolver');
 
         if (is_callable($resolver)) {
-            $tenant = $resolver();
-        } elseif (class_exists(Filament::class)) {
-            $tenant = Filament::getTenant();
-        } else {
-            $tenant = null;
+            return $resolver();
         }
 
-        if ($tenant instanceof Model) {
-            return $tenant->getKey();
+        return class_exists(Filament::class) ? Filament::getTenant() : null;
+    }
+
+    /**
+     * Whether forms may carry their own CSS (config "frontend.custom_css").
+     */
+    public static function allowsCustomCss(): bool
+    {
+        return (bool) config('packstub-form-builder.frontend.custom_css', true);
+    }
+
+    /**
+     * Whether forms may carry their own JavaScript: config
+     * "frontend.custom_js", or when it is null (the default), only outside
+     * tenancy, where the people who build forms are the site's own.
+     */
+    public static function allowsCustomJs(): bool
+    {
+        $allowed = config('packstub-form-builder.frontend.custom_js');
+
+        return $allowed === null ? static::tenantColumn() === null : (bool) $allowed;
+    }
+
+    // ------------------------------------------------------------------
+    // Panel users
+    // ------------------------------------------------------------------
+
+    /**
+     * Narrow or order the users a form can notify in the panel (the "Notify
+     * in the panel" picker). The callback receives the query on the user
+     * model and the current tenant (null outside tenancy) and returns the
+     * query. In a tenant, members are narrowed on top of it, see panelUsers().
+     *
+     * @param  (\Closure(Builder<Model>, ?Model): (Builder<Model>|null))|null  $callback
+     */
+    public function panelUsersUsing(?\Closure $callback): static
+    {
+        $this->panelUsersQuery = $callback;
+
+        return $this;
+    }
+
+    /**
+     * How many users panelUsers() asks one by one, at most, when the tenant
+     * has no members relationship.
+     */
+    public const PANEL_USERS_SCAN_LIMIT = 2000;
+
+    /**
+     * The users a form can notify in the panel. In a tenant, only its
+     * members: the users of its members relationship (config
+     * "tenancy.members", else a "members" or "users" relationship to the
+     * user model), in one query. Without one, the users whose
+     * canAccessTenant() accepts it (Filament's HasTenants), asked one by
+     * one among the first PANEL_USERS_SCAN_LIMIT users of the query; a
+     * user model without that contract is not limited, as in the panel.
+     *
+     * @return Collection<int, Model>
+     */
+    public function panelUsers(?Model $tenant = null, int $limit = 500): Collection
+    {
+        $model = config('auth.providers.users.model');
+
+        if (! is_string($model) || ! class_exists($model)) {
+            return new Collection;
         }
 
-        return is_int($tenant) || is_string($tenant) ? $tenant : null;
+        /** @var Builder<Model> $query */
+        $query = $model::query();
+
+        if ($this->panelUsersQuery !== null) {
+            $query = ($this->panelUsersQuery)($query, $tenant) ?? $query;
+        }
+
+        if ($tenant === null) {
+            return $query->limit($limit)->get();
+        }
+
+        if (($members = static::membersOf($tenant, $query->getModel())) !== null) {
+            return $query
+                ->whereIn($query->getModel()->getQualifiedKeyName(), $members->getQuery()->select($members->getRelated()->getQualifiedKeyName()))
+                ->limit($limit)
+                ->get();
+        }
+
+        return new Collection(
+            $query->reorder()->orderBy($query->getModel()->getQualifiedKeyName())
+                ->limit(self::PANEL_USERS_SCAN_LIMIT)
+                ->cursor()
+                ->filter(fn (Model $user): bool => static::canAccessTenant($user, $tenant))
+                ->take($limit)
+                ->values()
+                ->all(),
+        );
+    }
+
+    /**
+     * The tenant's relationship to its users: config "tenancy.members",
+     * else "members" or "users", when it leads to the user model.
+     */
+    protected static function membersOf(Model $tenant, Model $user): ?Relation
+    {
+        $configured = config('packstub-form-builder.tenancy.members');
+        $names = is_string($configured) && $configured !== '' ? [$configured] : ['members', 'users'];
+
+        foreach ($names as $name) {
+            if (! method_exists($tenant, $name)) {
+                continue;
+            }
+
+            $relation = $tenant->{$name}();
+
+            if ($relation instanceof Relation && $relation->getRelated() instanceof $user) {
+                return $relation;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether a user may be told about a tenant's submissions.
+     */
+    public static function canAccessTenant(Model $user, Model $tenant): bool
+    {
+        return ! $user instanceof HasTenants || $user->canAccessTenant($tenant);
     }
 
     public function fieldTypes(): FieldTypeRegistry

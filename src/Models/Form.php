@@ -629,18 +629,58 @@ class Form extends Model
         return $max > 0 ? $max : null;
     }
 
+    /**
+     * The form's own CSS, or null when there is none or config
+     * "frontend.custom_css" turns it off (FormBuilder::allowsCustomCss()).
+     */
     public function customCss(): ?string
     {
+        if (! FormBuilder::allowsCustomCss()) {
+            return null;
+        }
+
         $css = $this->setting('custom_css');
 
         return is_string($css) && trim($css) !== '' ? $css : null;
     }
 
+    /**
+     * The form's own JavaScript, or null when there is none or config
+     * "frontend.custom_js" turns it off (FormBuilder::allowsCustomJs()).
+     */
     public function customJs(): ?string
     {
+        if (! FormBuilder::allowsCustomJs()) {
+            return null;
+        }
+
         $js = $this->setting('custom_js');
 
         return is_string($js) && trim($js) !== '' ? $js : null;
+    }
+
+    /**
+     * The custom CSS, safe inside a <style> element: every "<" becomes the
+     * CSS escape "\3C ", so nothing in it can close the element (a "<"
+     * means the same inside a CSS string and is invalid anywhere else).
+     */
+    public function inlineCss(): ?string
+    {
+        $css = $this->customCss();
+
+        return $css === null ? null : str_replace('<', '\\3C ', $css);
+    }
+
+    /**
+     * The custom JavaScript, safe inside a <script> element: "</" becomes
+     * "<\/" (the same inside a JavaScript string) and "<!--" becomes
+     * "<\!--", so nothing in it can close the element.
+     */
+    public function inlineJs(): ?string
+    {
+        $js = $this->customJs();
+
+        return $js === null ? null : str_replace(['</', '<!--'], ['<\\/', '<\\!--'], $js);
     }
 
     public function pageTitle(): string

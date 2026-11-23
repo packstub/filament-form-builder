@@ -193,7 +193,9 @@ class FormBuilderPlugin implements Plugin
 
     /**
      * The panel URL of a form's submissions, or null outside a panel that
-     * runs the plugin.
+     * runs the plugin. In a panel with tenancy the URL carries the form's
+     * own tenant, so it also works where no tenant is current (a public
+     * submission, a queued job); a form without a tenant has no URL there.
      */
     public static function submissionsUrl(Form $form): ?string
     {
@@ -202,10 +204,16 @@ class FormBuilderPlugin implements Plugin
                 continue;
             }
 
+            $tenant = $panel->hasTenancy() ? FormBuilder::tenantOf($form) : null;
+
+            if ($panel->hasTenancy() && $tenant === null) {
+                continue;
+            }
+
             /** @var static $plugin */
             $plugin = $panel->getPlugin(static::ID);
 
-            return $plugin->getResource()::getUrl('edit', ['record' => $form], panel: $panel->getId()).'#submissions';
+            return $plugin->getResource()::getUrl('edit', ['record' => $form], panel: $panel->getId(), tenant: $tenant).'#submissions';
         }
 
         return null;

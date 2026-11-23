@@ -308,6 +308,13 @@ return [
     | steps (the plain POST still works without it). "prefill" lets the
     | page URL's query parameters fill fields of the same key.
     |
+    | "custom_css" and "custom_js" are the form's own CSS and JavaScript
+    | (Design tab), printed with the form by both renderers. Turn them off
+    | where the people who build forms must not run code on your pages (a
+    | panel your customers sign in to): the fields leave the editor and
+    | whatever a form has stored is no longer printed. "custom_js" null
+    | means on, except with "tenancy.enabled".
+    |
     | Livewire renderer: "livewire_assets" puts Filament's colour variables,
     | scripts and the renderer's stylesheet on any page that renders
     | <livewire:form-builder> and does not print @filamentStyles /
@@ -324,6 +331,8 @@ return [
         'styles' => true,
         'enhance' => true,
         'prefill' => true,
+        'custom_css' => true,
+        'custom_js' => null,
         'livewire_assets' => true,
         'livewire_theme' => null,
     ],
@@ -337,8 +346,11 @@ return [
     | "column" when it is created, and queries only see the current tenant's
     | forms. The current tenant is Filament's (a panel with ->tenant()) or
     | what "resolver" (a callable) returns. "model" is the tenant model, for
-    | the relationship. With a database per tenant (Filament Tenancy) leave
-    | this off: each tenant has its own tables.
+    | the relationship and the panel links in emails (null = the one of the
+    | panel that runs the plugin). "members" is the tenant's relationship to
+    | its users, which "Notify in the panel" offers (null = "members" or
+    | "users" when the tenant model has one). With a database per tenant
+    | (Filament Tenancy) leave this off: each tenant has its own tables.
     |
     */
 
@@ -346,6 +358,7 @@ return [
         'enabled' => false,
         'column' => 'tenant_id',
         'model' => null,
+        'members' => null,
         'resolver' => null,
     ],
 
