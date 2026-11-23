@@ -151,3 +151,18 @@ it('hides the resource when the plugin says no', function (): void {
 
     expect(FormResource::canAccess())->toBeTrue();
 });
+
+it('refuses a redirect URL that would run script', function (): void {
+    $form = contactForm();
+    $this->actingAs(createUser());
+
+    livewire(EditForm::class, ['record' => $form->getRouteKey()])
+        ->fillForm(['redirect_url' => 'javascript:alert(1)'])
+        ->call('save')
+        ->assertHasFormErrors(['redirect_url']);
+
+    livewire(EditForm::class, ['record' => $form->getRouteKey()])
+        ->fillForm(['redirect_url' => '/thanks'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+});

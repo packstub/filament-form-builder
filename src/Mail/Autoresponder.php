@@ -43,7 +43,7 @@ class Autoresponder extends Mailable
     public function content(): Content
     {
         $form = $this->submission->form;
-        $body = MergeTags::render($form->setting('autoresponder_body'), $this->submission)
+        $body = MergeTags::render($form->setting('autoresponder_body'), $this->submission, markdown: true)
             ?: __('packstub-form-builder::form-builder.mail.autoresponder_body');
 
         Branding::apply($this, $form);

@@ -183,7 +183,9 @@ class Form extends Component
                 'visibility' => $section->visibility->isAlways() ? null : $section->visibility->toArray(),
                 'fields' => $section->fields->filter(fn (Field $field): bool => $field->isInput())->map(fn (Field $field): string => $field->key)->values()->all(),
             ])->values()->all(),
-        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+            // Printed inside a <script> element: "<" and "&" as \u escapes, so
+            // a condition value can't close it.
+        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
     }
 
     /**

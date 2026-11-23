@@ -30,6 +30,7 @@ return [
         'success_message' => 'Success message',
         'redirect_url' => 'Redirect after submit',
         'redirect_url_hint' => 'Leave empty to show the success message in place.',
+        'redirect_url_invalid' => 'Use a full http(s) URL or a path on this site, such as /thanks.',
         'notification_emails' => 'Notify by email',
         'notification_emails_hint' => 'One email per submission is sent to each address.',
         'store_submissions' => 'Store submissions',

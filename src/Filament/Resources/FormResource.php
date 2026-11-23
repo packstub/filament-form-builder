@@ -48,6 +48,7 @@ use Packstub\FormBuilder\FormBuilderPlugin;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Notifications\ChannelMessage;
 use Packstub\FormBuilder\Submissions\Captcha;
+use Packstub\FormBuilder\Submissions\SubmissionResult;
 use Packstub\FormBuilder\Webhooks\Webhook;
 
 class FormResource extends Resource
@@ -222,7 +223,12 @@ class FormResource extends Resource
                     TextInput::make('redirect_url')
                         ->label(__('packstub-form-builder::form-builder.fields.redirect_url'))
                         ->helperText(__('packstub-form-builder::form-builder.fields.redirect_url_hint'))
-                        ->maxLength(2048),
+                        ->maxLength(2048)
+                        ->rule(fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
+                            if (filled($value) && (! is_string($value) || ! SubmissionResult::isSafeRedirect($value))) {
+                                $fail(__('packstub-form-builder::form-builder.fields.redirect_url_invalid'));
+                            }
+                        }),
                     Textarea::make('success_message')
                         ->label(__('packstub-form-builder::form-builder.fields.success_message'))
                         ->placeholder(__('packstub-form-builder::form-builder.frontend.success'))

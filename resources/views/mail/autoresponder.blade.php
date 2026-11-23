@@ -17,7 +17,7 @@
 | {{ __('packstub-form-builder::form-builder.mail.field') }} | {{ __('packstub-form-builder::form-builder.mail.value') }} |
 |:--|:--|
 @foreach ($rows as $row)
-| {{ $row['label'] }} | {{ str_replace(['|', "\n"], ['\|', ' '], $row['value']) }} |
+| {!! \Packstub\FormBuilder\Notifications\MergeTags::markdown($row['label']) !!} | {!! \Packstub\FormBuilder\Notifications\MergeTags::markdown($row['value']) !!} |
 @endforeach
 </x-mail::table>
 @endif

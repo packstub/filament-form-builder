@@ -155,3 +155,15 @@ it('can turn the routes off', function (): void {
 
     $this->get('/forms/contact')->assertNotFound();
 });
+
+it('never hands out a redirect URL that is not http(s) or a path on the site', function (string $url): void {
+    $form = contactForm(['redirect_url' => $url]);
+
+    $this->postJson('/forms/contact', contactInput($form))->assertOk()->assertJson(['ok' => true, 'redirect' => null]);
+})->with([
+    'javascript' => 'javascript:alert(document.domain)',
+    'javascript with spaces' => ' JaVaScRiPt:alert(1)',
+    'data' => 'data:text/html,<script>alert(1)</script>',
+    'protocol-relative' => '//evil.test/phish',
+    'backslash' => '/\\evil.test',
+]);

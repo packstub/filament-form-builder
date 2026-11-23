@@ -33,7 +33,12 @@ final class MergeTags
         return $tags;
     }
 
-    public static function render(?string $text, FormSubmission $submission): string
+    /**
+     * The text with its tags filled in. With $markdown (a Markdown mail
+     * body), every value is escaped first, so what a visitor typed shows
+     * as typed and never becomes HTML, a link or formatting.
+     */
+    public static function render(?string $text, FormSubmission $submission, bool $markdown = false): string
     {
         if ($text === null || $text === '') {
             return '';
@@ -41,10 +46,28 @@ final class MergeTags
 
         $tags = self::for($submission);
 
+        if ($markdown) {
+            $tags = array_map(self::markdown(...), $tags);
+        }
+
         return (string) preg_replace_callback('/\{\{\s*([a-z0-9_]+)\s*\}\}|\{([a-z0-9_]+)\}/i', function (array $match) use ($tags): string {
             $key = $match[1] !== '' ? $match[1] : $match[2];
 
             return $tags[$key] ?? $match[0];
         }, $text);
+    }
+
+    /**
+     * A value as literal Markdown text: HTML escaped (no tags, no
+     * autolinks), the characters of emphasis, code, links and tables
+     * backslash-escaped, and line breaks turned into spaces so a value
+     * can't start a block of its own.
+     */
+    public static function markdown(string $value): string
+    {
+        $value = preg_replace('/\s*\R\s*/u', ' ', $value) ?? $value;
+        $value = (string) preg_replace('/([\\\\`*_\[\]|~])/', '\\\\$1', $value);
+
+        return e($value);
     }
 }
