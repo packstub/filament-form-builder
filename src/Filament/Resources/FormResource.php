@@ -49,6 +49,7 @@ use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Notifications\ChannelMessage;
 use Packstub\FormBuilder\Submissions\Captcha;
 use Packstub\FormBuilder\Submissions\SubmissionResult;
+use Packstub\FormBuilder\Webhooks\OutboundUrl;
 use Packstub\FormBuilder\Webhooks\Webhook;
 
 class FormResource extends Resource
@@ -441,6 +442,11 @@ class FormResource extends Resource
                                 ->startsWith(['https://'])
                                 ->required()
                                 ->maxLength(2048)
+                                ->rule(fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
+                                    if (is_string($value) && $value !== '' && ! OutboundUrl::allows($value)) {
+                                        $fail(__('packstub-form-builder::form-builder.fields.webhook_url_private'));
+                                    }
+                                })
                                 ->columnSpan(2),
                         ])
                         ->columns(3)
@@ -458,6 +464,11 @@ class FormResource extends Resource
                         ->helperText(__('packstub-form-builder::form-builder.fields.webhook_url_hint'))
                         ->url()
                         ->maxLength(2048)
+                        ->rule(fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
+                            if (is_string($value) && $value !== '' && ! OutboundUrl::allows($value)) {
+                                $fail(__('packstub-form-builder::form-builder.fields.webhook_url_private'));
+                            }
+                        })
                         ->live(onBlur: true)
                         ->afterStateUpdated(function (?string $state, Get $get, Set $set): void {
                             if (filled($state) && blank($get('settings.webhook_secret'))) {

@@ -257,6 +257,13 @@ return [
     | Deliveries are queued, retried "attempts" times with a growing delay,
     | and logged for "keep_days" days.
     |
+    | "private_networks" lets webhooks and chat channels reach private,
+    | loopback and reserved addresses (localhost, 10.x, 169.254.169.254...).
+    | Off, a URL must resolve to public addresses only, the request goes to
+    | the address that was checked and follows no redirect. Null means on,
+    | except with "tenancy.enabled", where the people who build forms are
+    | your customers.
+    |
     */
 
     'webhooks' => [
@@ -265,6 +272,7 @@ return [
         'timeout' => 15,
         'keep_days' => 30,
         'verify_ssl' => true,
+        'private_networks' => null,
     ],
 
     /*

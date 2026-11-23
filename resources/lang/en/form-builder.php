@@ -106,6 +106,7 @@ return [
         'add_channel' => 'Add a channel',
         'webhook_url' => 'Webhook URL',
         'webhook_url_hint' => 'Every submission is posted here as JSON, signed with the secret.',
+        'webhook_url_private' => 'Use a URL on the public internet.',
         'webhook_method' => 'Method',
         'webhook_secret' => 'Signing secret',
         'webhook_secret_hint' => 'Generated when empty. Check the webhook-signature header with it.',

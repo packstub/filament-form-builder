@@ -55,12 +55,31 @@ class DeliverWebhook implements ShouldQueue
             $url = $webhook->url;
         }
 
+        $options = ['verify' => (bool) config('packstub-form-builder.webhooks.verify_ssl', true)];
+
+        if (! OutboundUrl::allowsPrivateNetworks()) {
+            $address = OutboundUrl::resolve($url);
+
+            if ($address === null) {
+                $delivery->forceFill(['status' => WebhookDelivery::FAILED, 'error' => 'The URL is not on the public internet.', 'next_attempt_at' => null])->save();
+
+                return;
+            }
+
+            // Connect to the address just checked, so a second DNS answer
+            // can't point the request somewhere else, and follow no redirect.
+            $parts = parse_url($url);
+            $port = $parts['port'] ?? (strtolower((string) $parts['scheme']) === 'https' ? 443 : 80);
+            $options['curl'] = [CURLOPT_RESOLVE => [trim((string) $parts['host'], '[]').':'.$port.':'.(str_contains($address, ':') ? '['.$address.']' : $address)]];
+            $options['allow_redirects'] = false;
+        }
+
         $delivery->attempts++;
 
         try {
             $response = Http::withHeaders($headers)
                 ->timeout((int) config('packstub-form-builder.webhooks.timeout', 15))
-                ->withOptions(['verify' => (bool) config('packstub-form-builder.webhooks.verify_ssl', true)])
+                ->withOptions($options)
                 ->withBody($body, 'application/json')
                 ->send($method, $url);
 
