@@ -134,7 +134,7 @@ it('takes the custom code fields off the editor when the config turns them off',
 
 it('keeps custom CSS inside its style element', function (): void {
     $form = contactForm(['settings' => [
-        'custom_css' => '.fb-form::after { content: "<b>" } </st</styleyle><img src=x onerror=alert(1)>',
+        'custom_css' => '@media (width < 600px) { .fb-form::after { content: "<b>" } } </st</styleyle><img src=x onerror=alert(1)>',
     ]]);
 
     foreach ([
@@ -142,9 +142,10 @@ it('keeps custom CSS inside its style element', function (): void {
         Blade::render('<x-form-builder::form form="contact" />'),
         livewire('form-builder', ['form' => $form])->html(),
     ] as $html) {
-        expect($html)->not->toContain('<img src=x')
-            ->toContain('content: "\3C b>"')
-            ->toContain('\3C /st\3C /styleyle>\3C img src=x onerror=alert(1)>');
+        expect($html)->not->toContain('</st</style')
+            ->toContain('@media (width < 600px)')
+            ->toContain('content: "<b>"')
+            ->toContain('<\/st<\/styleyle><img src=x onerror=alert(1)>');
     }
 });
 

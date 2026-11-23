@@ -168,9 +168,17 @@ class FileField extends FieldType
             };
         }
 
-        // Livewire hands over stored paths; the browser and the JSON API hand over files.
+        // Livewire hands over stored paths; the browser and the JSON API hand
+        // over files. A path must be one of this form's own uploads.
         $rules[] = function (string $attribute, mixed $value, \Closure $fail): void {
-            if (! ($value instanceof UploadedFile) && ! (is_string($value) && $value !== '')) {
+            if ($value instanceof UploadedFile) {
+                return;
+            }
+
+            /** @var Form|null $form */
+            $form = app()->bound('packstub-form-builder.current-form') ? app('packstub-form-builder.current-form') : null;
+
+            if (! is_string($value) || $form === null || ! Uploads::owns($form, $value) || ! $this->exists($value)) {
                 $fail(__('validation.file', ['attribute' => $attribute]));
             }
         };
@@ -209,7 +217,7 @@ class FileField extends FieldType
                 if ($path !== null) {
                     $paths[] = $path;
                 }
-            } elseif (is_string($item) && $item !== '' && ! str_starts_with($item, 'data:')) {
+            } elseif (is_string($item) && $form !== null && Uploads::owns($form, $item)) {
                 $paths[] = $item;
             }
         }
@@ -254,6 +262,7 @@ class FileField extends FieldType
 
                 $temp = tempnam(sys_get_temp_dir(), 'fb-upload');
                 file_put_contents($temp, $contents);
+                app()->terminating(fn () => @unlink($temp));
                 $items[] = new UploadedFile($temp, is_string($name) && $name !== '' ? $name : 'upload', $matches[1], null, true);
 
                 continue;

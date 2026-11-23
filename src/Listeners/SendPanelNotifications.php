@@ -37,9 +37,16 @@ class SendPanelNotifications
         $users = $model::query()->whereKey($ids)->get();
 
         // A picked user who is no member of the form's tenant (any more) is
-        // not told about its submissions.
-        if (($tenant = FormBuilder::tenantOf($event->form)) !== null) {
-            $users = $users->filter(fn (Model $user): bool => FormBuilder::canAccessTenant($user, $tenant))->values();
+        // not told about its submissions; nobody is, when the tenant can't
+        // be loaded to check.
+        $column = FormBuilder::tenantColumn();
+
+        if ($column !== null && $event->form->getAttribute($column) !== null) {
+            $tenant = FormBuilder::tenantOf($event->form);
+
+            $users = $tenant === null
+                ? $users->take(0)
+                : $users->filter(fn (Model $user): bool => FormBuilder::canAccessTenant($user, $tenant))->values();
         }
 
         if ($users->isEmpty()) {

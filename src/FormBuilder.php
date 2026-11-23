@@ -246,8 +246,9 @@ class FormBuilder
      * "tenancy.members", else a "members" or "users" relationship to the
      * user model), in one query. Without one, the users whose
      * canAccessTenant() accepts it (Filament's HasTenants), asked one by
-     * one among the first PANEL_USERS_SCAN_LIMIT users of the query; a
-     * user model without that contract is not limited, as in the panel.
+     * one among the first PANEL_USERS_SCAN_LIMIT users of the query. When
+     * neither proves membership, nobody: a tenant's submissions never go to
+     * users it can't vouch for.
      *
      * @return Collection<int, Model>
      */
@@ -275,6 +276,10 @@ class FormBuilder
                 ->whereIn($query->getModel()->getQualifiedKeyName(), $members->getQuery()->select($members->getRelated()->getQualifiedKeyName()))
                 ->limit($limit)
                 ->get();
+        }
+
+        if (! $query->getModel() instanceof HasTenants) {
+            return new Collection;
         }
 
         return new Collection(
@@ -313,11 +318,36 @@ class FormBuilder
     }
 
     /**
-     * Whether a user may be told about a tenant's submissions.
+     * Whether a user may be told about a tenant's submissions: a member
+     * through the tenant's members relationship (see panelUsers()), else
+     * one whose canAccessTenant() accepts it, else nobody.
      */
     public static function canAccessTenant(Model $user, Model $tenant): bool
     {
-        return ! $user instanceof HasTenants || $user->canAccessTenant($tenant);
+        if (($members = static::membersOf($tenant, $user)) !== null) {
+            return $members->getQuery()->whereKey($user->getKey())->exists();
+        }
+
+        return $user instanceof HasTenants && $user->canAccessTenant($tenant);
+    }
+
+    /**
+     * The users "Notify in the panel" offers where the form is edited: the
+     * current tenant's members, nobody when a tenant is current but can't
+     * be loaded as a model (a resolver returning a key without
+     * "tenancy.model"), everyone the query allows outside tenancy.
+     *
+     * @return Collection<int, Model>
+     */
+    public function currentPanelUsers(int $limit = 500): Collection
+    {
+        $tenant = static::currentTenant();
+
+        if ($tenant === null && static::currentTenantKey() !== null) {
+            return new Collection;
+        }
+
+        return $this->panelUsers($tenant, $limit);
     }
 
     public function fieldTypes(): FieldTypeRegistry

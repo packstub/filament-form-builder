@@ -9,7 +9,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Packstub\FormBuilder\Facades\FormBuilder;
 use Packstub\FormBuilder\Filament\Resources\FormResource\Pages\EditForm;
+use Packstub\FormBuilder\FormBuilder as FormBuilderService;
 use Packstub\FormBuilder\Submissions\Submitter;
+use Packstub\FormBuilder\Tests\Fixtures\PlainUser;
+use Packstub\FormBuilder\Tests\Fixtures\Team;
 use Packstub\FormBuilder\Tests\Fixtures\TeamPanelProvider;
 
 use function Pest\Livewire\livewire;
@@ -86,6 +89,19 @@ describe('in a panel with tenancy', function (): void {
 
         expect(DB::table('notifications')->pluck('notifiable_id')->all())->toBe([$this->ada->id]);
     });
+
+    it('notifies nobody when the form\'s tenant cannot be loaded', function (): void {
+        Filament::setTenant($this->acme, isQuiet: true);
+        $form = contactForm(['settings' => ['notify_users' => [$this->ada->id]]]);
+        Filament::setTenant(null, isQuiet: true);
+
+        $this->acme->users()->detach();
+        $this->acme->delete();
+
+        app(Submitter::class)->submit($form, contactInput($form));
+
+        expect(DB::table('notifications')->count())->toBe(0);
+    });
 });
 
 describe('members of a large workspace', function (): void {
@@ -109,5 +125,34 @@ describe('members of a large workspace', function (): void {
         config()->set('packstub-form-builder.tenancy.members', 'nothing');
 
         expect(FormBuilder::panelUsers($this->acme)->modelKeys())->toBe([$this->ada->id]);
+    });
+
+    it('offers nobody when neither a relationship nor the user model proves membership', function (): void {
+        config()->set('packstub-form-builder.tenancy.members', 'nothing');
+        config()->set('auth.providers.users.model', PlainUser::class);
+
+        expect(FormBuilder::panelUsers($this->acme))->toBeEmpty()
+            ->and(FormBuilderService::canAccessTenant(PlainUser::query()->find($this->bob->id), $this->acme))->toBeFalse();
+    });
+});
+
+describe('with a tenancy resolver outside Filament', function (): void {
+    beforeEach(function (): void {
+        $this->rebootWith(['packstub-form-builder.tenancy.enabled' => true]);
+
+        $this->ada = createUser(['name' => 'Ada']);
+        $this->bob = createUser(['name' => 'Bob']);
+        $this->acme = createTeam('acme', $this->ada);
+    });
+
+    it('offers nobody when the resolver gives a tenant key the plugin cannot load', function (): void {
+        config()->set('packstub-form-builder.tenancy.resolver', fn (): int => $this->acme->id);
+        config()->set('packstub-form-builder.tenancy.model', null);
+
+        expect(FormBuilder::currentPanelUsers())->toBeEmpty();
+
+        config()->set('packstub-form-builder.tenancy.model', Team::class);
+
+        expect(FormBuilder::currentPanelUsers()->modelKeys())->toBe([$this->ada->id]);
     });
 });

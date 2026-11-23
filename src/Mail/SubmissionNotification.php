@@ -81,7 +81,7 @@ class SubmissionNotification extends Mailable
                 continue;
             }
 
-            foreach (Uploads::files($this->submission->value($key)) as $path) {
+            foreach (Uploads::filesOf($this->submission, (string) $key) as $path) {
                 if (! $disk->exists($path)) {
                     continue;
                 }

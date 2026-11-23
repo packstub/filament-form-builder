@@ -343,7 +343,7 @@ class SubmissionsRelationManager extends RelationManager
                     if ($field->type::id() === 'file') {
                         $links = [];
 
-                        foreach (Uploads::files($record->value($key)) as $index => $path) {
+                        foreach (Uploads::filesOf($record, (string) $key) as $index => $path) {
                             $url = Uploads::url($record, $key, $index);
                             $links[] = $url === null
                                 ? e(Uploads::originalName($path))

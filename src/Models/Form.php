@@ -660,15 +660,16 @@ class Form extends Model
     }
 
     /**
-     * The custom CSS, safe inside a <style> element: every "<" becomes the
-     * CSS escape "\3C ", so nothing in it can close the element (a "<"
-     * means the same inside a CSS string and is invalid anywhere else).
+     * The custom CSS, safe inside a <style> element: "</" becomes "<\/"
+     * (the same inside a CSS string or comment, and never valid CSS
+     * anywhere else), so nothing in it can close the element, while a
+     * lone "<" such as "@media (width < 600px)" stays as written.
      */
     public function inlineCss(): ?string
     {
         $css = $this->customCss();
 
-        return $css === null ? null : str_replace('<', '\\3C ', $css);
+        return $css === null ? null : str_replace('</', '<\\/', $css);
     }
 
     /**

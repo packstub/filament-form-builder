@@ -16,6 +16,7 @@ use Packstub\FormBuilder\Testing\FormBuilderFake;
  * @method static \Packstub\FormBuilder\FormBuilder forgetSinks()
  * @method static \Packstub\FormBuilder\FormBuilder panelUsersUsing(?\Closure $callback)
  * @method static \Illuminate\Database\Eloquent\Collection panelUsers(?\Illuminate\Database\Eloquent\Model $tenant = null, int $limit = 500)
+ * @method static \Illuminate\Database\Eloquent\Collection currentPanelUsers(int $limit = 500)
  * @method static ?\Packstub\FormBuilder\Models\Form find(\Packstub\FormBuilder\Models\Form|string|int $form)
  * @method static \Packstub\FormBuilder\Submissions\SubmissionResult submit(\Packstub\FormBuilder\Models\Form|string|int $form, array $data, ?\Packstub\FormBuilder\Submissions\SubmissionContext $context = null)
  * @method static string formModel()

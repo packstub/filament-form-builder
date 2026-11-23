@@ -651,13 +651,13 @@ class FormResource extends Resource
 
     /**
      * The users offered under "Notify in the panel": in a tenant, its
-     * members only (FormBuilder::panelUsers()).
+     * members only (FormBuilder::currentPanelUsers()).
      *
      * @return array<int|string, string>
      */
     protected static function userOptions(): array
     {
-        return app(FormBuilder::class)->panelUsers(FormBuilder::currentTenant())->mapWithKeys(function (Model $user): array {
+        return app(FormBuilder::class)->currentPanelUsers()->mapWithKeys(function (Model $user): array {
             $label = $user->getAttribute('name') ?? $user->getAttribute('email') ?? (string) $user->getKey();
 
             return [$user->getKey() => (string) $label];
