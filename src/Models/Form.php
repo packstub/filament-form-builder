@@ -163,7 +163,7 @@ class Form extends Model
             if ($loose->isNotEmpty()) {
                 $key = 'section_'.(++$index);
                 $fields = $loose
-                    ->map(fn (array $item): ?Field => Field::fromArray($item, $registry, $key))
+                    ->map(fn (array $item): ?Field => Field::fromArray($item, $registry, $key, $this))
                     ->filter(fn (?Field $field): bool => $field !== null && ! $field->hidden)
                     ->values();
                 $sections->push(new Section($key, null, null, Conditions::always(), $fields, implicit: true));
@@ -187,7 +187,7 @@ class Form extends Model
                 $key = Str::slug((string) ($data['key'] ?? ''), '_') ?: 'section_'.($index + 1);
                 $index++;
                 $fields = collect(is_array($data['fields'] ?? null) ? $data['fields'] : [])
-                    ->map(fn ($child): ?Field => is_array($child) ? Field::fromArray($child, $registry, $key) : null)
+                    ->map(fn ($child): ?Field => is_array($child) ? Field::fromArray($child, $registry, $key, $this) : null)
                     ->filter(fn (?Field $field): bool => $field !== null && ! $field->hidden)
                     ->values();
 
@@ -263,7 +263,7 @@ class Form extends Model
 
             if (($item['type'] ?? null) === self::SECTION_TYPE) {
                 foreach ((array) data_get($item, 'data.fields', []) as $child) {
-                    if (is_array($child) && ($field = Field::fromArray($child, $registry)) !== null && $field->isInput()) {
+                    if (is_array($child) && ($field = Field::fromArray($child, $registry, form: $this)) !== null && $field->isInput()) {
                         $fields->put($field->key, $field);
                     }
                 }
@@ -271,7 +271,7 @@ class Form extends Model
                 continue;
             }
 
-            if (($field = Field::fromArray($item, $registry)) !== null && $field->isInput()) {
+            if (($field = Field::fromArray($item, $registry, form: $this)) !== null && $field->isInput()) {
                 $fields->put($field->key, $field);
             }
         }

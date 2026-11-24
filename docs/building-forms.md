@@ -82,7 +82,7 @@ use Packstub\FormBuilder\Facades\FormBuilder;
 FormBuilder::choices('courses', fn () => Course::query()->orderBy('name')->pluck('name', 'id'), 'Courses');
 ```
 
-A source is a closure (it receives the `Field`), a `value => label` array, or a class implementing `Packstub\FormBuilder\Contracts\ChoiceSource` (also accepted in config `choice_sources`). It runs when the form renders and again on submit, so validation uses the live list, and inside the current tenant, so tenant-scoped queries just work. The key is stored; tables, emails and exports show the label, and the key once the record is gone.
+A source is a closure (it receives the `Field`), a `value => label` array, or a class implementing `Packstub\FormBuilder\Contracts\ChoiceSource` (also accepted in config `choice_sources`). It runs when the form renders and again on submit, so validation uses the live list, and inside a tenant: the current one in the panel, the form's own on public pages and in queued jobs (set as Filament's current tenant), so queries scoped to `Filament::getTenant()` only see the form's rows. With your own `tenancy.resolver`, scope the query yourself: `$field->form` is the form. The key is stored; tables, emails and exports show the label, and the key once the record is gone.
 
 ## Validation
 

@@ -15,6 +15,7 @@ A security release for panels with tenancy. Please update.
 - Security: a file field accepted any stored path, so a submission could name another file on the uploads disk; it now takes the form's own uploads only
 - Security: a condition value or a redirect URL could run a script on the form's page, and visitor values became HTML in the emails; all three are escaped or checked now
 - Security: a webhook could reach private addresses (cloud metadata, localhost) and follow redirects; it now connects to the checked public address and follows none
+- Security: with tenancy, a choice source on a public page ran outside any workspace and could list every workspace's rows; it now runs inside the form's workspace
 - Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
 - Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy
 - `composer.json`'s homepage points at the package's page on packstub.dev

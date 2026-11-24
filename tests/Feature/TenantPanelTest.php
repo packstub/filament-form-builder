@@ -2,15 +2,22 @@
 
 use Filament\Facades\Filament;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Packstub\FormBuilder\Facades\FormBuilder;
+use Packstub\FormBuilder\Fields\ChoiceSources;
 use Packstub\FormBuilder\Filament\Resources\FormResource\Pages\ListForms;
 use Packstub\FormBuilder\FormBuilderPlugin;
+use Packstub\FormBuilder\Livewire\FormBuilderForm;
 use Packstub\FormBuilder\Mail\SubmissionNotification;
 use Packstub\FormBuilder\Models\Form;
+use Packstub\FormBuilder\Submissions\SubmissionContext;
+use Packstub\FormBuilder\Submissions\Submitter;
 use Packstub\FormBuilder\Tests\Fixtures\Team;
 use Packstub\FormBuilder\Tests\Fixtures\TeamPanelProvider;
+use Packstub\FormBuilder\Tests\Fixtures\User;
 
 use function Pest\Livewire\livewire;
 
@@ -83,4 +90,53 @@ it('lists the forms of the current workspace only', function (): void {
     livewire(ListForms::class)
         ->assertCanSeeTableRecords([$globex])
         ->assertCanNotSeeTableRecords([$acme]);
+});
+
+/**
+ * A form of $team with a dropdown fed by a source that lists the members of
+ * the current workspace, as a tenant-scoped query would.
+ */
+function memberPickerForm(Team $team): Form
+{
+    FormBuilder::choices('members', fn (): array => Filament::getTenant() instanceof Team
+        ? Filament::getTenant()->users()->pluck('name', 'users.id')->all()
+        : User::query()->pluck('name', 'id')->all());
+
+    Filament::setTenant($team, isQuiet: true);
+    $form = Form::query()->create([
+        'name' => 'Pick',
+        'slug' => 'pick',
+        'fields' => [field('select', 'Member', ['key' => 'member', 'choices_source' => 'members', 'required' => true])],
+    ]);
+    Filament::setTenant(null, isQuiet: true);
+
+    return $form;
+}
+
+it('runs a choice source inside the form\'s workspace on public pages', function (): void {
+    $form = memberPickerForm($this->acme);
+
+    $html = Blade::render('<x-form-builder::form form="pick" />');
+    expect($html)->toContain('Ada')->not->toContain('Bob')
+        ->and(Filament::getTenant())->toBeNull();
+
+    app(ChoiceSources::class)->flush();
+    $this->getJson('/forms/pick/definition')->assertOk()
+        ->assertJsonPath('fields.0.choices', [(string) $this->ada->id => 'Ada']);
+
+    app(ChoiceSources::class)->flush();
+    livewire(FormBuilderForm::class, ['form' => 'pick'])->assertSee('Ada')->assertDontSee('Bob');
+
+    app(ChoiceSources::class)->flush();
+    expect(fn () => app(Submitter::class)->submit($form, ['member' => (string) $this->bob->id], (new SubmissionContext)->trusted()))
+        ->toThrow(ValidationException::class)
+        ->and(Filament::getTenant())->toBeNull();
+});
+
+it('keeps the current workspace when one is set', function (): void {
+    $form = memberPickerForm($this->acme);
+    Filament::setTenant($this->globex, isQuiet: true);
+
+    expect($form->field('member')->choices())->toBe([(string) $this->bob->id => 'Bob'])
+        ->and(Filament::getTenant()->is($this->globex))->toBeTrue();
 });
