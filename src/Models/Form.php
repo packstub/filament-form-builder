@@ -64,7 +64,8 @@ class Form extends Model
     protected static function booted(): void
     {
         static::saving(function (self $form): void {
-            $form->slug = Str::slug($form->slug ?: $form->name);
+            // A name without a letter or digit to slug ("!!!") gets a random slug.
+            $form->slug = Str::slug($form->slug ?: $form->name) ?: 'form-'.Str::lower(Str::random(8));
             $form->fields = static::normalizeFieldDefinitions($form->fields ?? []);
             $form->resolvedSections = null;
         });

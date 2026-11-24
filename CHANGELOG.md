@@ -31,6 +31,7 @@ A security release for panels with tenancy. Please update.
 - Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
 - Fixed: two submissions arriving together could both take a form's or a share link's last place
 - Fixed: a single file posted without `[]` in the field name gave a server error
+- Fixed: a second form whose name gives no slug ("!!!") gave a server error
 - Fixed: choices from your data were kept after a failed queued job
 - Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy
 - `composer.json`'s homepage points at the package's page on packstub.dev
