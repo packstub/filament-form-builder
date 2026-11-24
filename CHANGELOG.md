@@ -2,7 +2,7 @@
 
 All notable changes to `packstub/filament-form-builder` are documented here.
 
-## Unreleased
+## 1.5.0 — 2026-11-24
 
 A security release. Please update: most of these fixes matter in a panel with tenancy, where the people who build forms are your customers.
 
