@@ -25,6 +25,7 @@ A security release for panels with tenancy. Please update.
 - Security: the endpoint that checks one step of a multi-step form stored uploaded files and ignored private forms and passwords; it now stores nothing, answers only visitors the form would take a submission from, and is rate limited (`submissions.validate_throttle`)
 - Security: the Livewire form's password and submit weren't rate limited; they now share the HTTP routes' limit (`submissions.throttle`)
 - Security: a form's token never expired, so it kept a private form open, and two posts racing with one token could both be stored; tokens now expire and are claimed before the insert
+- Security: a value starting with `=` became a live formula in the Excel and CSV exports; exports now keep it as text
 - Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
 - Fixed: a single file posted without `[]` in the field name gave a server error
 - Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy

