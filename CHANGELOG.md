@@ -4,7 +4,7 @@ All notable changes to `packstub/filament-form-builder` are documented here.
 
 ## Unreleased
 
-A security release for panels with tenancy. Please update.
+A security release. Please update: most of these fixes matter in a panel with tenancy, where the people who build forms are your customers.
 
 **Upgrading:** with `tenancy.enabled`, a form's custom CSS and JavaScript are off by default; set `frontend.custom_css` or `frontend.custom_js` to `true` to keep them.
 
