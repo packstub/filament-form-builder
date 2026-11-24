@@ -164,8 +164,9 @@ return [
     |
     | Where the file upload field stores files: a disk and a directory under
     | it. Keep a private disk; the panel serves downloads through a signed
-    | route. "max_kb" is the default size limit; "attach_max_kb" caps what
-    | the notification email attaches.
+    | route, with links valid for "link_minutes" (null: no expiry). "max_kb"
+    | is the default size limit; "attach_max_kb" caps what the notification
+    | email attaches.
     |
     */
 
@@ -174,6 +175,7 @@ return [
         'directory' => 'form-builder',
         'max_kb' => 10240,
         'attach_max_kb' => 10240,
+        'link_minutes' => 1440,
     ],
 
     /*

@@ -136,6 +136,11 @@ it('accepts base64 uploads from the JSON API', function (): void {
     $url = Uploads::url($submission, 'attachment');
     $this->get($url)->assertOk()->assertDownload('note.pdf');
     $this->get(preg_replace('/signature=\w+/', 'signature=bad', $url))->assertForbidden();
+
+    // ...and expires.
+    expect($url)->toContain('expires=');
+    $this->travel(1441)->minutes();
+    $this->get($url)->assertForbidden();
 });
 
 it('renders every new type in the plain renderer', function (): void {

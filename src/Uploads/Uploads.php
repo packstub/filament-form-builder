@@ -127,7 +127,8 @@ final class Uploads
     }
 
     /**
-     * A signed download URL for a file of a submission.
+     * A signed download URL for a file of a submission, valid for config
+     * "uploads.link_minutes" (null: no expiry).
      */
     public static function url(FormSubmission $submission, string $field, int $index = 0): ?string
     {
@@ -135,11 +136,16 @@ final class Uploads
             return null;
         }
 
-        return URL::signedRoute('packstub-form-builder.file', [
+        $parameters = [
             'submission' => $submission->getKey(),
             'field' => $field,
             'index' => $index,
-        ]);
+        ];
+        $minutes = config('packstub-form-builder.uploads.link_minutes', 1440);
+
+        return is_numeric($minutes) && (int) $minutes > 0
+            ? URL::temporarySignedRoute('packstub-form-builder.file', now()->addMinutes((int) $minutes), $parameters)
+            : URL::signedRoute('packstub-form-builder.file', $parameters);
     }
 
     /**
