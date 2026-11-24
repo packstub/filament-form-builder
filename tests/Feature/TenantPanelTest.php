@@ -118,7 +118,9 @@ it('runs a choice source inside the form\'s workspace on public pages', function
     $form = memberPickerForm($this->acme);
 
     $html = Blade::render('<x-form-builder::form form="pick" />');
-    expect($html)->toContain('Ada')->not->toContain('Bob')
+    // Match the option markup: the encrypted protection token in the page is
+    // random base64 and can spell "Bob" on its own.
+    expect($html)->toContain('>Ada</option>')->not->toContain('>Bob</option>')
         ->and(Filament::getTenant())->toBeNull();
 
     app(ChoiceSources::class)->flush();
@@ -126,7 +128,8 @@ it('runs a choice source inside the form\'s workspace on public pages', function
         ->assertJsonPath('fields.0.choices', [(string) $this->ada->id => 'Ada']);
 
     app(ChoiceSources::class)->flush();
-    livewire(FormBuilderForm::class, ['form' => 'pick'])->assertSee('Ada')->assertDontSee('Bob');
+    $html = livewire(FormBuilderForm::class, ['form' => 'pick'])->html();
+    expect($html)->toMatch('/>\s*Ada\s*<\/option>/')->not->toMatch('/>\s*Bob\s*<\/option>/');
 
     app(ChoiceSources::class)->flush();
     expect(fn () => app(Submitter::class)->submit($form, ['member' => (string) $this->bob->id], (new SubmissionContext)->trusted()))
