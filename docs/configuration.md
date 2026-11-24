@@ -37,6 +37,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `captcha.default` | `null` | Provider for forms that pick none: `turnstile`, `hcaptcha`, `recaptcha` |
 | `captcha.{provider}.site_key`, `secret` | env | The keys; `captcha.recaptcha.min_score` (`0.5`) for v3 |
 | `notifications.from_email`, `from_name` | env | Defaults for the emails a form sends |
+| `notifications.custom_from` | `null` | Let a form set its own sender address; `null` is on, except with `tenancy.enabled` |
 | `webhooks.queue` | `true` | Queue deliveries |
 | `webhooks.attempts` | `3` | Tries per delivery |
 | `webhooks.timeout` | `15` | Seconds per request |

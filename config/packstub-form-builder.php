@@ -238,13 +238,17 @@ return [
     |
     | Defaults for the emails a submission sends; every form can override
     | them in its Notifications settings. Null falls back to the mail
-    | "from" of your app.
+    | "from" of your app. "custom_from" lets a form set its own sender
+    | address; null means on, except with "tenancy.enabled", where the
+    | people who build forms must not send as any address on your mailer
+    | (the sender name stays theirs to set).
     |
     */
 
     'notifications' => [
         'from_email' => env('FORM_BUILDER_FROM_EMAIL'),
         'from_name' => env('FORM_BUILDER_FROM_NAME'),
+        'custom_from' => null,
     ],
 
     /*

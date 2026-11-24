@@ -134,3 +134,20 @@ it('puts what the visitor typed into the emails as text, never as HTML or a link
 
     expect((new Autoresponder($submission))->render())->toContain('Hi &lt;a href="https://evil.test/login"&gt;Verify your account&lt;/a&gt;');
 });
+
+it('sends from the app\'s address, not the form\'s, with tenancy', function (): void {
+    config([
+        'packstub-form-builder.tenancy.enabled' => true,
+        'packstub-form-builder.notifications.from_email' => 'forms@platform.test',
+    ]);
+    $form = contactForm(['settings' => ['notify_from_email' => 'ceo@bank.example', 'notify_from_name' => 'Acme']]);
+    $submission = app(Submitter::class)->submit($form, contactInput($form))->submission;
+
+    expect((new SubmissionNotification($submission))->envelope()->from->address)->toBe('forms@platform.test')
+        ->and((new Autoresponder($submission))->envelope()->from->address)->toBe('forms@platform.test')
+        ->and((new Autoresponder($submission))->envelope()->from->name)->toBe('Acme');
+
+    config(['packstub-form-builder.notifications.custom_from' => true]);
+
+    expect((new SubmissionNotification($submission))->envelope()->from->address)->toBe('ceo@bank.example');
+});

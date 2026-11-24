@@ -10,12 +10,15 @@ A security release for panels with tenancy. Please update.
 
 **Upgrading:** with `tenancy.enabled`, webhooks and chat channels reach public addresses only; set `webhooks.private_networks` to `true` to allow private ones.
 
+**Upgrading:** with `tenancy.enabled`, a form's own sender address is ignored and its emails come from `notifications.from_email`; set `notifications.custom_from` to `true` to keep it.
+
 - Security: in a panel with tenancy, **Notify in the panel** offered the users of every workspace, and a picked user got the submission's summary from another workspace; it now offers and notifies the workspace's members only (`tenancy.members` names the relationship)
 - Security: a form's custom CSS could close its `<style>` element and run a script on the page; both renderers now neutralise `</` in it (a `<` such as `@media (width < 600px)` stays as written)
 - Security: a file field accepted any stored path, so a submission could name another file on the uploads disk; it now takes the form's own uploads only
 - Security: a condition value or a redirect URL could run a script on the form's page, and visitor values became HTML in the emails; all three are escaped or checked now
 - Security: a webhook could reach private addresses (cloud metadata, localhost) and follow redirects; it now connects to the checked public address and follows none
 - Security: with tenancy, a choice source on a public page ran outside any workspace and could list every workspace's rows; it now runs inside the form's workspace
+- Security: with tenancy, a form could send its emails as any address on your mailer; the sender address is now yours (`notifications.custom_from`)
 - Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
 - Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy
 - `composer.json`'s homepage points at the package's page on packstub.dev

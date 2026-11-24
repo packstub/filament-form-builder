@@ -10,7 +10,9 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
+use Packstub\FormBuilder\FormBuilder;
 use Packstub\FormBuilder\FormBuilderPlugin;
+use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\FormSubmission;
 use Packstub\FormBuilder\Notifications\MergeTags;
 use Packstub\FormBuilder\Uploads\Uploads;
@@ -33,11 +35,8 @@ class SubmissionNotification extends Mailable
         $subject = MergeTags::render($form->setting('notify_subject'), $this->submission)
             ?: __('packstub-form-builder::form-builder.mail.subject', ['form' => $form->name]);
 
-        $from = $form->setting('notify_from_email', config('packstub-form-builder.notifications.from_email'));
-        $fromName = $form->setting('notify_from_name', config('packstub-form-builder.notifications.from_name'));
-
         return new Envelope(
-            from: is_string($from) && $from !== '' ? new Address($from, is_string($fromName) && $fromName !== '' ? $fromName : null) : null,
+            from: static::fromAddress($form),
             replyTo: static::addresses([$this->replyToAddress()]),
             cc: static::addresses((array) $form->setting('notify_cc', [])),
             bcc: static::addresses((array) $form->setting('notify_bcc', [])),
@@ -123,6 +122,24 @@ class SubmissionNotification extends Mailable
         }
 
         return null;
+    }
+
+    /**
+     * The sender of a form's emails: its own address when forms may set one
+     * (FormBuilder::allowsCustomFrom()), else config
+     * "notifications.from_email"; null leaves the mailer's default.
+     */
+    public static function fromAddress(Form $form): ?Address
+    {
+        $default = config('packstub-form-builder.notifications.from_email');
+        $from = FormBuilder::allowsCustomFrom() ? $form->setting('notify_from_email', $default) : $default;
+        $fromName = $form->setting('notify_from_name', config('packstub-form-builder.notifications.from_name'));
+
+        if (! is_string($from) || filter_var(trim($from), FILTER_VALIDATE_EMAIL) === false) {
+            return null;
+        }
+
+        return new Address(trim($from), is_string($fromName) && $fromName !== '' ? $fromName : null);
     }
 
     /**

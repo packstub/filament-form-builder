@@ -204,6 +204,19 @@ class FormBuilder
     }
 
     /**
+     * Whether a form may set its own sender address (config
+     * "notifications.custom_from"), or when it is null (the default), only
+     * outside tenancy: a customer must not send as any address on your
+     * mailer.
+     */
+    public static function allowsCustomFrom(): bool
+    {
+        $allowed = config('packstub-form-builder.notifications.custom_from');
+
+        return $allowed === null ? static::tenantColumn() === null : (bool) $allowed;
+    }
+
+    /**
      * Whether forms may carry their own JavaScript: config
      * "frontend.custom_js", or when it is null (the default), only outside
      * tenancy, where the people who build forms are the site's own.

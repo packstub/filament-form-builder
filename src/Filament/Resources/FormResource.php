@@ -362,7 +362,8 @@ class FormResource extends Resource
                         ->label(__('packstub-form-builder::form-builder.fields.notify_from_email'))
                         ->email()
                         ->placeholder((string) (config('packstub-form-builder.notifications.from_email') ?: config('mail.from.address')))
-                        ->maxLength(255),
+                        ->maxLength(255)
+                        ->visible(fn (): bool => FormBuilder::allowsCustomFrom()),
                     TextInput::make('settings.notify_from_name')
                         ->label(__('packstub-form-builder::form-builder.fields.notify_from_name'))
                         ->placeholder((string) (config('packstub-form-builder.notifications.from_name') ?: config('mail.from.name')))
