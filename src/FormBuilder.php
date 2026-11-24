@@ -196,11 +196,16 @@ class FormBuilder
     }
 
     /**
-     * Whether forms may carry their own CSS (config "frontend.custom_css").
+     * Whether forms may carry their own CSS: config "frontend.custom_css",
+     * or when it is null (the default), only outside tenancy. A selector
+     * can read attribute values such as the CSRF token, and the panel's
+     * preview would let a form restyle the whole panel.
      */
     public static function allowsCustomCss(): bool
     {
-        return (bool) config('packstub-form-builder.frontend.custom_css', true);
+        $allowed = config('packstub-form-builder.frontend.custom_css');
+
+        return $allowed === null ? static::tenantColumn() === null : (bool) $allowed;
     }
 
     /**

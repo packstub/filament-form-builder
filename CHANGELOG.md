@@ -6,7 +6,7 @@ All notable changes to `packstub/filament-form-builder` are documented here.
 
 A security release for panels with tenancy. Please update.
 
-**Upgrading:** with `tenancy.enabled`, a form's custom JavaScript is off by default; set `frontend.custom_js` to `true` to keep it.
+**Upgrading:** with `tenancy.enabled`, a form's custom CSS and JavaScript are off by default; set `frontend.custom_css` or `frontend.custom_js` to `true` to keep them.
 
 **Upgrading:** with `tenancy.enabled`, webhooks and chat channels reach public addresses only; set `webhooks.private_networks` to `true` to allow private ones.
 

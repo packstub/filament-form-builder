@@ -49,7 +49,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `frontend.styles` | `true` | Inline the stylesheet with the Blade renderer |
 | `frontend.enhance` | `true` | Inline the script (in-place submit, conditions, steps) |
 | `frontend.prefill` | `true` | Let the page URL's query parameters fill fields (per form in the panel) |
-| `frontend.custom_css`, `frontend.custom_js` | `true`, `null` | The form's own CSS and JavaScript (Design tab); off, the fields leave the editor and stored code is not printed. `custom_js` `null` is on, except with `tenancy.enabled` |
+| `frontend.custom_css`, `frontend.custom_js` | `null`, `null` | The form's own CSS and JavaScript (Design tab); off, the fields leave the editor and stored code is not printed. `null` is on, except with `tenancy.enabled` |
 | `frontend.livewire_assets` | `true` | Put Filament's frontend on pages that render the Livewire component |
 | `frontend.livewire_theme` | `null` | Its stylesheet: `null` the compiled one, a path or URL, `false` none |
 | `tenancy.enabled` | `false` | Scope forms to a tenant |

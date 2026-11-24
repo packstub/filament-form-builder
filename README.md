@@ -296,7 +296,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `formats.*` | `Y-m-d`, `Y-m-d H:i`, `H:i` | Display formats |
 | `sinks` | `[]` | `SubmissionSink` classes |
 | `frontend.styles`, `frontend.enhance`, `frontend.prefill` | `true` | Inline the stylesheet and the script; prefill from the URL |
-| `frontend.custom_css`, `frontend.custom_js` | `true`, `null` | The form's own CSS and JavaScript (Design tab); `false` takes the field off the editor and prints no stored code. JavaScript is off by default with `tenancy.enabled` |
+| `frontend.custom_css`, `frontend.custom_js` | `null`, `null` | The form's own CSS and JavaScript (Design tab); `false` takes the field off the editor and prints no stored code. Both are off by default with `tenancy.enabled` |
 | `tenancy.*` | off | Scope forms to a tenant |
 | `navigation.*`, `gate` | — | Navigation group, icon, sort, unread badge; an ability to check |
 

@@ -324,8 +324,8 @@ return [
     | (Design tab), printed with the form by both renderers. Turn them off
     | where the people who build forms must not run code on your pages (a
     | panel your customers sign in to): the fields leave the editor and
-    | whatever a form has stored is no longer printed. "custom_js" null
-    | means on, except with "tenancy.enabled".
+    | whatever a form has stored is no longer printed. Null means on,
+    | except with "tenancy.enabled".
     |
     | Livewire renderer: "livewire_assets" puts Filament's colour variables,
     | scripts and the renderer's stylesheet on any page that renders
@@ -343,7 +343,7 @@ return [
         'styles' => true,
         'enhance' => true,
         'prefill' => true,
-        'custom_css' => true,
+        'custom_css' => null,
         'custom_js' => null,
         'livewire_assets' => true,
         'livewire_theme' => null,

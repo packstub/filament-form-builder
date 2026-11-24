@@ -163,15 +163,19 @@ it('keeps custom JavaScript inside its script element', function (): void {
     }
 });
 
-it('turns custom JavaScript off by default with tenancy', function (?bool $setting, bool $printed): void {
+it('turns custom CSS and JavaScript off by default with tenancy', function (?bool $setting, bool $printed): void {
     $this->rebootWith([
         'packstub-form-builder.tenancy.enabled' => true,
+        'packstub-form-builder.frontend.custom_css' => $setting,
         'packstub-form-builder.frontend.custom_js' => $setting,
     ]);
-    $form = contactForm(['settings' => ['custom_js' => "form.dataset.ready = '1';"]]);
+    $form = contactForm(['settings' => ['custom_css' => '.fb-form { color: red }', 'custom_js' => "form.dataset.ready = '1';"]]);
+    $html = Blade::render('<x-form-builder::form form="contact" />');
 
-    expect(str_contains(Blade::render('<x-form-builder::form form="contact" />'), "form.dataset.ready = '1';"))->toBe($printed)
-        ->and($form->customJs() !== null)->toBe($printed);
+    expect(str_contains($html, "form.dataset.ready = '1';"))->toBe($printed)
+        ->and(str_contains($html, '.fb-form { color: red }'))->toBe($printed)
+        ->and($form->customJs() !== null)->toBe($printed)
+        ->and($form->customCss() !== null)->toBe($printed);
 })->with([
     'default' => [null, false],
     'turned on' => [true, true],
