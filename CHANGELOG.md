@@ -36,6 +36,7 @@ A security release. Please update: most of these fixes matter in a panel with te
 - Fixed: with panels of different tenant models, the plugin took the first panel's instead of the current one's
 - Fixed: choices from your data were kept after a failed queued job
 - Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy
+- Fixed: on Filament 5.12, the Livewire form's stylesheet missed the loading placeholder Filament now shows while a field loads
 - `composer.json`'s homepage points at the package's page on packstub.dev
 
 ## 1.4.0 — 2026-10-02
