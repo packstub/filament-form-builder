@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\FormSubmission;
@@ -53,4 +54,13 @@ it('never serves, attaches or deletes a stored path outside the form\'s uploads'
 
     expect(Storage::disk('local')->exists('secrets/keep.txt'))->toBeTrue()
         ->and(Storage::disk('local')->exists($own))->toBeFalse();
+});
+
+it('takes a single file posted without brackets', function (): void {
+    Storage::fake('local');
+    $form = Form::query()->create(['name' => 'Apply', 'slug' => 'apply', 'fields' => [field('file', 'CV', ['key' => 'cv'])]]);
+
+    $this->post('/forms/apply', ['cv' => UploadedFile::fake()->create('cv.pdf', 10)], ['Accept' => 'application/json'])->assertOk();
+
+    expect(Uploads::filesOf(FormSubmission::query()->sole(), 'cv'))->toHaveCount(1);
 });

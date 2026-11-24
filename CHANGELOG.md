@@ -22,6 +22,7 @@ A security release for panels with tenancy. Please update.
 - Security: importing a form's JSON skipped the editor's checks; users, addresses, URLs and code it would refuse are now dropped
 - Security: the endpoint that checks one step of a multi-step form stored uploaded files and ignored private forms and passwords; it now stores nothing, answers only visitors the form would take a submission from, and is rate limited (`submissions.validate_throttle`)
 - Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
+- Fixed: a single file posted without `[]` in the field name gave a server error
 - Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy
 - `composer.json`'s homepage points at the package's page on packstub.dev
 

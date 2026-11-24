@@ -200,7 +200,7 @@ class FileField extends FieldType
         $form = app()->bound('packstub-form-builder.current-form') ? app('packstub-form-builder.current-form') : null;
         $paths = [];
 
-        foreach (array_values((array) $value) as $item) {
+        foreach (is_array($value) ? array_values($value) : [$value] as $item) {
             if ($item instanceof TemporaryUploadedFile && $form !== null) {
                 $paths[] = Uploads::store($item, $form);
             } elseif ($item instanceof UploadedFile && $form !== null) {
@@ -247,7 +247,7 @@ class FileField extends FieldType
 
         $items = [];
 
-        foreach (array_values((array) $value) as $item) {
+        foreach (is_array($value) ? array_values($value) : [$value] as $item) {
             $dataUri = is_array($item) ? ($item['data'] ?? null) : $item;
             $name = is_array($item) ? ($item['name'] ?? null) : null;
 
