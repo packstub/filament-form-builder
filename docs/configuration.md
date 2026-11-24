@@ -42,6 +42,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `webhooks.timeout` | `15` | Seconds per request |
 | `webhooks.keep_days` | `30` | Days the delivery log is kept |
 | `webhooks.verify_ssl` | `true` | Verify the endpoint's certificate |
+| `webhooks.private_networks` | `null` | Let webhooks and chat channels reach private, loopback and reserved addresses; `null` is on, except with `tenancy.enabled` |
 | `formats.date`, `datetime`, `time` | `Y-m-d`, `Y-m-d H:i`, `H:i` | Display formats in the panel, emails and exports |
 | `sinks` | `[]` | `SubmissionSink` classes |
 | `frontend.styles` | `true` | Inline the stylesheet with the Blade renderer |
