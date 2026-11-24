@@ -123,8 +123,35 @@ class Captcha
             if (isset($result['score']) && (float) $result['score'] < $minimum) {
                 return __('packstub-form-builder::form-builder.frontend.captcha_failed');
             }
+
+            // The form's script asks for the "submit" action.
+            if (isset($result['action']) && $result['action'] !== 'submit') {
+                return __('packstub-form-builder::form-builder.frontend.captcha_failed');
+            }
+        }
+
+        if (is_string($result['hostname'] ?? null) && ! $this->hostnameAllowed($result['hostname'])) {
+            return __('packstub-form-builder::form-builder.frontend.captcha_failed');
         }
 
         return null;
+    }
+
+    /**
+     * Whether the captcha was solved on a page the form may be posted from:
+     * this site, or a host of config "spam.allowed_origins". With no allowed
+     * origins (embeds anywhere), any host.
+     */
+    protected function hostnameAllowed(string $hostname): bool
+    {
+        if (array_filter((array) config('packstub-form-builder.spam.allowed_origins', [])) === []) {
+            return true;
+        }
+
+        if (app()->bound('request') && strcasecmp($hostname, request()->getHost()) === 0) {
+            return true;
+        }
+
+        return app(SpamGuard::class)->originAllowed('https://'.$hostname);
     }
 }

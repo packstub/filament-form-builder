@@ -7,6 +7,7 @@ use Packstub\FormBuilder\Events\SpamDetected;
 use Packstub\FormBuilder\Exceptions\FormClosedException;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\FormSubmission;
+use Packstub\FormBuilder\Submissions\Captcha;
 use Packstub\FormBuilder\Submissions\PasswordGate;
 use Packstub\FormBuilder\Submissions\ProtectionToken;
 use Packstub\FormBuilder\Submissions\SpamGuard;
@@ -281,4 +282,31 @@ it('checks the submission limit again with the form locked, so a racing post can
     expect(fn () => app(Submitter::class)->submit($form, contactInput($form), new SubmissionContext))
         ->toThrow(FormClosedException::class, 'All seats are taken.')
         ->and(FormSubmission::query()->count())->toBe(1);
+});
+
+it('refuses a captcha solved on another site or for another reCAPTCHA action', function (): void {
+    config()->set('packstub-form-builder.captcha.turnstile', ['site_key' => 'site', 'secret' => 'secret']);
+    config()->set('packstub-form-builder.captcha.recaptcha', ['site_key' => 'site', 'secret' => 'secret', 'min_score' => 0.5]);
+    config()->set('packstub-form-builder.spam.allowed_origins', ['*.acme.test']);
+    $form = contactForm(['settings' => ['captcha' => 'turnstile']]);
+    $captcha = app(Captcha::class);
+
+    Http::fake([
+        'challenges.cloudflare.com/*' => Http::sequence()
+            ->push(['success' => true, 'hostname' => 'evil.example'])
+            ->push(['success' => true, 'hostname' => 'www.acme.test'])
+            ->push(['success' => true, 'hostname' => 'localhost']),
+        'www.google.com/*' => Http::sequence()
+            ->push(['success' => true, 'score' => 0.9, 'action' => 'login', 'hostname' => 'localhost'])
+            ->push(['success' => true, 'score' => 0.9, 'action' => 'submit', 'hostname' => 'localhost']),
+    ]);
+
+    expect($captcha->verify($form, ['cf-turnstile-response' => 'x']))->toBe('The captcha could not be verified. Please try again.')
+        ->and($captcha->verify($form, ['cf-turnstile-response' => 'x']))->toBeNull()
+        ->and($captcha->verify($form, ['cf-turnstile-response' => 'x']))->toBeNull();
+
+    $form->settings = ['captcha' => 'recaptcha'];
+
+    expect($captcha->verify($form, ['g-recaptcha-response' => 'x']))->toBe('The captcha could not be verified. Please try again.')
+        ->and($captcha->verify($form, ['g-recaptcha-response' => 'x']))->toBeNull();
 });

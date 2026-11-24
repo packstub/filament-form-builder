@@ -27,6 +27,7 @@ A security release for panels with tenancy. Please update.
 - Security: a form's token never expired, so it kept a private form open, and two posts racing with one token could both be stored; tokens now expire and are claimed before the insert
 - Security: a value starting with `=` became a live formula in the Excel and CSV exports; exports now keep it as text
 - Security: file download links from the panel never expired; they now last a day (`uploads.link_minutes`)
+- Security: with `spam.allowed_origins` set, a captcha solved on another site is refused, and reCAPTCHA must answer for the form's own action
 - Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
 - Fixed: two submissions arriving together could both take a form's or a share link's last place
 - Fixed: a single file posted without `[]` in the field name gave a server error
