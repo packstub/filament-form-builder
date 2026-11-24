@@ -64,3 +64,12 @@ it('exposes a JSON definition', function (): void {
         ->and($definition['fields'][2]['choices'])->toBe(['sales' => 'Sales', 'support' => 'Support'])
         ->and($definition['fields'][7]['input'])->toBeFalse();
 });
+
+it('gives a form whose name makes no slug a random one', function (): void {
+    $first = Form::query()->create(['name' => '!!!', 'fields' => []]);
+    $second = Form::query()->create(['name' => '???', 'fields' => []]);
+
+    expect($first->slug)->toStartWith('form-')
+        ->and($second->slug)->toStartWith('form-')
+        ->and($first->slug)->not->toBe($second->slug);
+});

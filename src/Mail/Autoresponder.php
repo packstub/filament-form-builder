@@ -4,7 +4,6 @@ namespace Packstub\FormBuilder\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -29,12 +28,10 @@ class Autoresponder extends Mailable
         $subject = MergeTags::render($form->setting('autoresponder_subject'), $this->submission)
             ?: __('packstub-form-builder::form-builder.mail.autoresponder_subject');
 
-        $from = $form->setting('notify_from_email', config('packstub-form-builder.notifications.from_email'));
-        $fromName = $form->setting('notify_from_name', config('packstub-form-builder.notifications.from_name'));
         $replyTo = $form->setting('notify_reply_to');
 
         return new Envelope(
-            from: is_string($from) && $from !== '' ? new Address($from, is_string($fromName) && $fromName !== '' ? $fromName : null) : null,
+            from: SubmissionNotification::fromAddress($form),
             replyTo: is_string($replyTo) && strtolower(trim($replyTo)) !== 'respondent' ? SubmissionNotification::addresses([$replyTo]) : [],
             subject: $subject,
         );
@@ -43,7 +40,7 @@ class Autoresponder extends Mailable
     public function content(): Content
     {
         $form = $this->submission->form;
-        $body = MergeTags::render($form->setting('autoresponder_body'), $this->submission)
+        $body = MergeTags::render($form->setting('autoresponder_body'), $this->submission, markdown: true)
             ?: __('packstub-form-builder::form-builder.mail.autoresponder_body');
 
         Branding::apply($this, $form);

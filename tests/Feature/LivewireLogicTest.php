@@ -133,3 +133,21 @@ it('submits the captcha token with the form', function (): void {
 
     Http::assertSent(fn ($request): bool => $request['response'] === 'token');
 });
+
+it('rate limits unlocking and submitting like the HTTP routes', function (): void {
+    config(['packstub-form-builder.submissions.throttle' => '2,1']);
+    contactForm(['settings' => ['password' => 'open']]);
+
+    $component = livewire(FormBuilderForm::class, ['form' => 'contact'])->set('password', 'nope');
+    $component->call('unlock')->assertSet('passwordError', 'That password is not right.');
+    $component->call('unlock')->assertSet('passwordError', 'That password is not right.');
+    $component->set('password', 'open')->call('unlock')
+        ->assertSet('passwordError', 'Too many attempts. Please wait a minute and try again.')
+        ->assertSet('locked', true);
+
+    contactForm(['slug' => 'other']);
+    $other = livewire(FormBuilderForm::class, ['form' => 'other']);
+    $other->call('submit');
+    $other->call('submit');
+    $other->call('submit')->assertHasErrors(['form'])->assertSee('Too many attempts. Please wait a minute and try again.')->assertSet('error', null);
+});

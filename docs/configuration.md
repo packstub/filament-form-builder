@@ -19,6 +19,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `routes.embed` | `true` | The embed script route |
 | `routes.share_prefix` | `f` | Where share links live (`/f/{token}`); `null` turns them off |
 | `submissions.throttle` | `10,1` | Rate limit per IP; `null` disables |
+| `submissions.validate_throttle` | `60,1` | Rate limit per IP of the validate endpoint (a step of a multi-step form), counted apart; `null` disables |
 | `submissions.store_ip` | `true` | Record the IP |
 | `submissions.store_user_agent` | `true` | Record the user agent |
 | `submissions.queue_notifications` | `true` | Queue notification emails |
@@ -27,30 +28,35 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `uploads.disk`, `uploads.directory` | `local`, `form-builder` | Where the file upload field stores files |
 | `uploads.max_kb` | `10240` | Default size limit of an upload |
 | `uploads.attach_max_kb` | `10240` | What the team email attaches at most, in total |
+| `uploads.orphan_days` | `7` | `form-builder:prune` deletes uploads no submission holds once they are this old (0 keeps them) |
+| `uploads.link_minutes` | `1440` | How long a download link from the panel stays valid; `null` never expires |
 | `spam.honeypot` | `true` | Honeypot default (per form in the panel) |
 | `spam.honeypot_field` | `_fb_website` | Name of the honeypot input |
 | `spam.min_seconds` | `2` | Time-trap default (per form in the panel) |
 | `spam.token_field` | `_fb_token` | Name of the token input |
-| `spam.token_ttl` | `120` | Minutes a used token is remembered |
+| `spam.token_ttl` | `1440` | Minutes a token is valid; a used one is remembered that long |
 | `spam.allowed_origins` | `[]` | Hosts the form may be posted from (empty: any) |
 | `spam.blocklist.words`, `email_domains`, `ips` | `[]` | Drop submissions that match |
 | `captcha.default` | `null` | Provider for forms that pick none: `turnstile`, `hcaptcha`, `recaptcha` |
 | `captcha.{provider}.site_key`, `secret` | env | The keys; `captcha.recaptcha.min_score` (`0.5`) for v3 |
 | `notifications.from_email`, `from_name` | env | Defaults for the emails a form sends |
+| `notifications.custom_from` | `null` | Let a form set its own sender address; `null` is on, except with `tenancy.enabled` |
 | `webhooks.queue` | `true` | Queue deliveries |
 | `webhooks.attempts` | `3` | Tries per delivery |
 | `webhooks.timeout` | `15` | Seconds per request |
 | `webhooks.keep_days` | `30` | Days the delivery log is kept |
 | `webhooks.verify_ssl` | `true` | Verify the endpoint's certificate |
+| `webhooks.private_networks` | `null` | Let webhooks and chat channels reach private, loopback and reserved addresses; `null` is on, except with `tenancy.enabled` |
 | `formats.date`, `datetime`, `time` | `Y-m-d`, `Y-m-d H:i`, `H:i` | Display formats in the panel, emails and exports |
 | `sinks` | `[]` | `SubmissionSink` classes |
 | `frontend.styles` | `true` | Inline the stylesheet with the Blade renderer |
 | `frontend.enhance` | `true` | Inline the script (in-place submit, conditions, steps) |
 | `frontend.prefill` | `true` | Let the page URL's query parameters fill fields (per form in the panel) |
+| `frontend.custom_css`, `frontend.custom_js` | `null`, `null` | The form's own CSS and JavaScript (Design tab); off, the fields leave the editor and stored code is not printed. `null` is on, except with `tenancy.enabled` |
 | `frontend.livewire_assets` | `true` | Put Filament's frontend on pages that render the Livewire component |
 | `frontend.livewire_theme` | `null` | Its stylesheet: `null` the compiled one, a path or URL, `false` none |
 | `tenancy.enabled` | `false` | Scope forms to a tenant |
-| `tenancy.column`, `model`, `resolver` | `tenant_id`, `null`, `null` | The column, the tenant model, a callable returning the current tenant (Filament's by default) |
+| `tenancy.column`, `model`, `members`, `resolver` | `tenant_id`, `null`, `null`, `null` | The column, the tenant model (the current panel's by default, else the first panel's with tenancy: set it when panels have different tenant models), the tenant's relationship to its users (`members` or `users` by default), a callable returning the current tenant (Filament's by default) |
 | `ownership.only_own` | `false` | Show each user only the forms they created |
 | `ownership.see_all` | `null` | A gate ability whose users still see every form |
 | `navigation.group`, `icon`, `sort`, `badge` | — | Navigation of the Forms resource |

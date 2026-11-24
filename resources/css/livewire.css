@@ -31,6 +31,8 @@
 @import '../../vendor/filament/support/resources/css/components/input/wrapper.css' layer(components);
 @import '../../vendor/filament/support/resources/css/components/link.css' layer(components);
 @import '../../vendor/filament/support/resources/css/components/loading-indicator.css' layer(components);
+@import '../../vendor/filament/support/resources/css/components/loading-placeholder.css' layer(components);
+@import '../../vendor/filament/support/resources/css/components/async-component.css' layer(components);
 @import '../../vendor/filament/support/resources/css/components/dropdown/index.css' layer(components);
 @import '../../vendor/filament/support/resources/css/components/dropdown/header.css' layer(components);
 @import '../../vendor/filament/support/resources/css/components/dropdown/list/index.css' layer(components);

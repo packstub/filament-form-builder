@@ -3,8 +3,12 @@
 namespace Packstub\FormBuilder\Fields;
 
 use Closure;
+use Filament\Facades\Filament;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Packstub\FormBuilder\Contracts\ChoiceSource;
+use Packstub\FormBuilder\FormBuilder;
+use Packstub\FormBuilder\Models\Form;
 
 /**
  * The named choice sources a choice field can take its options from:
@@ -77,18 +81,31 @@ class ChoiceSources
             return [];
         }
 
-        $cacheKey = $name.'|'.$field->key.'|'.md5((string) json_encode($field->options));
+        $tenant = $this->tenantToEnter($field);
+        $cacheKey = $name.'|'.$field->key.'|'.md5((string) json_encode($field->options)).'|'.($tenant?->getKey() ?? '');
 
         if (isset($this->resolved[$cacheKey])) {
             return $this->resolved[$cacheKey];
         }
 
         $source = $this->instance($this->sources[$name]['source']);
-        $choices = match (true) {
+        $run = fn (): mixed => match (true) {
             $source instanceof ChoiceSource => $source->choices($field),
             $source instanceof Closure => $source($field),
             default => $source,
         };
+
+        if ($tenant === null) {
+            $choices = $run();
+        } else {
+            Filament::setTenant($tenant, isQuiet: true);
+
+            try {
+                $choices = $run();
+            } finally {
+                Filament::setTenant(null, isQuiet: true);
+            }
+        }
 
         $normalized = [];
 
@@ -101,6 +118,20 @@ class ChoiceSources
         }
 
         return $this->resolved[$cacheKey] = $normalized;
+    }
+
+    /**
+     * Outside a tenant (a public page, a queued job), the tenant of the
+     * field's form, so a source runs inside the tenant that owns the form
+     * and tenant-scoped queries only see its rows.
+     */
+    protected function tenantToEnter(Field $field): ?Model
+    {
+        if (FormBuilder::tenantColumn() === null || ! $field->form instanceof Form || ! class_exists(Filament::class) || Filament::getTenant() !== null) {
+            return null;
+        }
+
+        return FormBuilder::tenantOf($field->form);
     }
 
     /**

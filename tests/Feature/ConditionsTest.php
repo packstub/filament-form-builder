@@ -2,6 +2,7 @@
 
 use Illuminate\Validation\ValidationException;
 use Packstub\FormBuilder\Fields\Conditions;
+use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Submissions\Submitter;
 
 it('compares values with every operator', function (): void {
@@ -111,4 +112,21 @@ it('exposes the conditions and the sections in the definition', function (): voi
         ->and($definition['sections'])->toHaveCount(1)
         ->and($definition['sections'][0]['fields'])->toBe(['attendance', 'tshirt', 'allergies', 'company'])
         ->and($definition['mode'])->toBe('single');
+});
+
+it('keeps a condition value inside the logic script element', function (): void {
+    Form::query()->create([
+        'name' => 'Logic',
+        'slug' => 'logic',
+        'fields' => [
+            field('text', 'Name', ['key' => 'name']),
+            field('text', 'Other', ['key' => 'other', 'visibility' => 'when',
+                'visibility_rules' => [['field' => 'name', 'operator' => 'equals', 'value' => '</script><img src=x onerror=alert(1)>']]]),
+        ],
+    ]);
+
+    $html = $this->get('/forms/logic')->assertOk()->getContent();
+
+    expect($html)->not->toContain('<img src=x')
+        ->toContain('\u003C/script\u003E\u003Cimg src=x onerror=alert(1)\u003E');
 });

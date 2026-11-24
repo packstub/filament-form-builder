@@ -151,6 +151,43 @@ it('duplicates, exports and imports a form', function (): void {
         ->assertNotified('The file is not a form export.');
 });
 
+it('drops imported settings the editor would refuse', function (): void {
+    config(['packstub-form-builder.webhooks.private_networks' => false, 'packstub-form-builder.notifications.custom_from' => false]);
+    $user = createUser();
+    $json = json_encode(['form' => [
+        'name' => 'Imported',
+        'fields' => [field('text', 'Name')],
+        'redirect_url' => 'javascript:alert(1)',
+        'notification_emails' => ['team@example.com', 'not an email'],
+        'settings' => [
+            'notify_users' => [$user->id, 99999],
+            'notify_from_email' => 'ceo@bank.example',
+            'notify_cc' => ['cc@example.com', ['nested']],
+            'webhook_url' => 'http://169.254.169.254/latest/meta-data/',
+            'webhook_method' => 'DELETE',
+            'channels' => [['provider' => 'slack', 'url' => 'http://hooks.example.com/x'], ['provider' => 'slack', 'url' => 'https://127.0.0.1/x']],
+            'page_logo' => 'javascript:alert(1)',
+            'mode' => 'single',
+        ],
+    ]], JSON_THROW_ON_ERROR);
+
+    livewire(ListForms::class)
+        ->callAction('importJson', ['file' => UploadedFile::fake()->createWithContent('form.json', $json)])
+        ->assertHasNoActionErrors();
+
+    $imported = Form::query()->where('name', 'Imported')->firstOrFail();
+
+    expect($imported->redirect_url)->toBeNull()
+        ->and($imported->notification_emails)->toBe(['team@example.com'])
+        ->and($imported->settings)->toMatchArray([
+            'notify_users' => [$user->id],
+            'notify_cc' => ['cc@example.com'],
+            'channels' => [],
+            'mode' => 'single',
+        ])
+        ->and($imported->settings)->not->toHaveKeys(['notify_from_email', 'webhook_url', 'webhook_method', 'page_logo']);
+});
+
 it('creates a form from a template', function (): void {
     expect(Templates::all())->toHaveCount(20)
         ->and(Templates::options())->toHaveKey('contact-form')

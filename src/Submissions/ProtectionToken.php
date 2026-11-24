@@ -58,6 +58,45 @@ class ProtectionToken
     }
 
     /**
+     * Whether the token was issued for this form longer ago than config
+     * "spam.token_ttl" minutes: it no longer opens a private form and must
+     * not post again once its "used" mark is gone.
+     */
+    public function isExpired(Form $form, mixed $token): bool
+    {
+        $age = $this->age($form, $token);
+
+        return $age !== null && $age > $this->ttlMinutes() * 60;
+    }
+
+    /**
+     * Mark the token used, atomically: false when another submission
+     * claimed it first. A missing or foreign token has nothing to claim.
+     */
+    public function claim(Form $form, mixed $token): bool
+    {
+        $payload = $this->payload($form, $token);
+
+        if ($payload === null || ! isset($payload['n'])) {
+            return true;
+        }
+
+        return Cache::add($this->usedKey($payload['n']), true, now()->addMinutes($this->ttlMinutes()));
+    }
+
+    /**
+     * Forget a claim, when the submission it was for could not be stored.
+     */
+    public function release(Form $form, mixed $token): void
+    {
+        $payload = $this->payload($form, $token);
+
+        if ($payload !== null && isset($payload['n'])) {
+            Cache::forget($this->usedKey($payload['n']));
+        }
+    }
+
+    /**
      * Whether the token was already used for an accepted submission.
      */
     public function isUsed(Form $form, mixed $token): bool
@@ -68,8 +107,8 @@ class ProtectionToken
     }
 
     /**
-     * Remember that the token was used, for as long as it could still pass
-     * the time trap (config "spam.token_ttl" minutes).
+     * Remember that the token was used, for as long as it is valid (config
+     * "spam.token_ttl" minutes).
      */
     public function markUsed(Form $form, mixed $token): void
     {
@@ -79,7 +118,12 @@ class ProtectionToken
             return;
         }
 
-        Cache::put($this->usedKey($payload['n']), true, now()->addMinutes((int) config('packstub-form-builder.spam.token_ttl', 120)));
+        Cache::put($this->usedKey($payload['n']), true, now()->addMinutes($this->ttlMinutes()));
+    }
+
+    protected function ttlMinutes(): int
+    {
+        return max(1, (int) config('packstub-form-builder.spam.token_ttl', 1440));
     }
 
     public function field(): string

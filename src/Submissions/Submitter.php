@@ -40,18 +40,7 @@ class Submitter
     {
         $context ??= new SubmissionContext;
 
-        $this->assertOpen($form, $context);
-        $link = $this->shareLink($form, $this->tokens->link($form, $input[$this->tokens->field()] ?? null) ?? $input[ShareLink::FIELD] ?? null);
-
-        // A private form takes a submission only from a render the server
-        // made (its own page, a signed URL, an active share link).
-        if (! $context->trusted && $form->isPrivate() && $link === null && ! $this->tokens->isValid($form, $input[$this->tokens->field()] ?? null)) {
-            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.private'));
-        }
-
-        if (! $context->trusted && ! $this->passwords->keyIsValid($form, $input[PasswordGate::FIELD] ?? null)) {
-            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.password_required'));
-        }
+        $link = $this->assertCanPost($form, $input, $context);
 
         if (! $context->trusted && ($reason = $this->spam->reason($form, $input, $context)) !== null) {
             $this->events->dispatch(new SpamDetected($form, $reason, $input, $context));
@@ -67,19 +56,66 @@ class Submitter
         $data = $this->validate($form, $input);
         $submission = $this->build($form, $data, $context);
         $submission->share_link_id = $link?->getKey();
+        $token = $input[$this->tokens->field()] ?? null;
 
-        if ($form->store_submissions) {
-            DB::transaction(function () use ($form, $submission): void {
-                $submission->number = $this->nextNumber($form);
-                $submission->save();
-            });
+        // Claimed before the insert, so two posts racing with one token
+        // can't both be stored.
+        if (! $this->tokens->claim($form, $token) && ! $context->trusted) {
+            $this->events->dispatch(new SpamDetected($form, 'reused_token', $input, $context));
+
+            return new SubmissionResult($form, null, spam: true);
         }
 
-        $this->tokens->markUsed($form, $input[$this->tokens->field()] ?? null);
+        try {
+            if ($form->store_submissions) {
+                DB::transaction(function () use ($form, $submission, $link, $context): void {
+                    $submission->number = $this->nextNumber($form);
+                    $this->assertRoomLeft($form, $link, $context);
+                    $submission->save();
+                });
+            }
+        } catch (\Throwable $e) {
+            $this->tokens->release($form, $token);
+
+            throw $e;
+        }
 
         $this->events->dispatch(new SubmissionReceived($form, $submission, $context));
 
         return new SubmissionResult($form, $submission);
+    }
+
+    /**
+     * Whether the input may be posted to the form at all: open, the visitor
+     * signed in when it must be, a render the server made for a private
+     * form (its own page, a signed URL, an active share link) and the
+     * password key. Returns the share link it came through, if any. A
+     * token older than "spam.token_ttl" is a validation error on "form":
+     * the page has to be reloaded.
+     *
+     * @param  array<string, mixed>  $input
+     *
+     * @throws FormClosedException
+     * @throws ValidationException
+     */
+    public function assertCanPost(Form $form, array $input, SubmissionContext $context): ?ShareLink
+    {
+        $this->assertOpen($form, $context);
+
+        if (! $context->trusted && $this->tokens->isExpired($form, $input[$this->tokens->field()] ?? null)) {
+            throw ValidationException::withMessages(['form' => [__('packstub-form-builder::form-builder.frontend.expired')]]);
+        }
+        $link = $this->shareLink($form, $this->tokens->link($form, $input[$this->tokens->field()] ?? null) ?? $input[ShareLink::FIELD] ?? null);
+
+        if (! $context->trusted && $form->isPrivate() && $link === null && ! $this->tokens->isValid($form, $input[$this->tokens->field()] ?? null)) {
+            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.private'));
+        }
+
+        if (! $context->trusted && ! $this->passwords->keyIsValid($form, $input[PasswordGate::FIELD] ?? null)) {
+            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.password_required'));
+        }
+
+        return $link;
     }
 
     /**
@@ -156,11 +192,12 @@ class Submitter
      *
      * @param  array<string, mixed>  $input
      * @param  array<int, string>|null  $only  Validate these keys only (a step of a multi-step form).
+     * @param  bool  $store  False to check only: uploaded files are not stored, and values come back as validated, not normalised.
      * @return array<string, mixed>
      *
      * @throws ValidationException
      */
-    public function validate(Form $form, array $input, ?array $only = null): array
+    public function validate(Form $form, array $input, ?array $only = null, bool $store = true): array
     {
         $input = array_diff_key($input, array_flip($this->spam->reservedKeys()));
 
@@ -203,7 +240,7 @@ class Submitter
                 $value = $field->default;
             }
 
-            $data[$field->key] = $field->type->normalize($value, $field);
+            $data[$field->key] = $store ? $field->type->normalize($value, $field) : $value;
         }
 
         return $data;
@@ -270,6 +307,27 @@ class Submitter
      * The next sequential number of the form's submissions, under a lock on
      * the form row.
      */
+    /**
+     * The limits again, with the form row locked (nextNumber()): two posts
+     * that both passed the first check can't both take the last place.
+     *
+     * @throws FormClosedException
+     */
+    protected function assertRoomLeft(Form $form, ?ShareLink $link, SubmissionContext $context): void
+    {
+        if (($max = $form->maxSubmissions()) !== null && $form->submissions()->count() >= $max) {
+            throw new FormClosedException((string) $form->setting('full_message', __('packstub-form-builder::form-builder.frontend.full')));
+        }
+
+        if ($link !== null && ($reason = $link->closedReason()) !== null) {
+            throw new FormClosedException($reason);
+        }
+
+        if ($form->onePerPerson() && $this->hasSubmitted($form, $context)) {
+            throw new FormClosedException((string) $form->setting('already_submitted_message', __('packstub-form-builder::form-builder.frontend.already_submitted')));
+        }
+    }
+
     protected function nextNumber(Form $form): int
     {
         $locked = $form->newQueryWithoutScopes()->whereKey($form->getKey())->lockForUpdate()->first();

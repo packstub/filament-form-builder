@@ -48,6 +48,8 @@ use Packstub\FormBuilder\FormBuilderPlugin;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Notifications\ChannelMessage;
 use Packstub\FormBuilder\Submissions\Captcha;
+use Packstub\FormBuilder\Submissions\SubmissionResult;
+use Packstub\FormBuilder\Webhooks\OutboundUrl;
 use Packstub\FormBuilder\Webhooks\Webhook;
 
 class FormResource extends Resource
@@ -222,7 +224,12 @@ class FormResource extends Resource
                     TextInput::make('redirect_url')
                         ->label(__('packstub-form-builder::form-builder.fields.redirect_url'))
                         ->helperText(__('packstub-form-builder::form-builder.fields.redirect_url_hint'))
-                        ->maxLength(2048),
+                        ->maxLength(2048)
+                        ->rule(fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
+                            if (filled($value) && (! is_string($value) || ! SubmissionResult::isSafeRedirect($value))) {
+                                $fail(__('packstub-form-builder::form-builder.fields.redirect_url_invalid'));
+                            }
+                        }),
                     Textarea::make('success_message')
                         ->label(__('packstub-form-builder::form-builder.fields.success_message'))
                         ->placeholder(__('packstub-form-builder::form-builder.frontend.success'))
@@ -355,7 +362,8 @@ class FormResource extends Resource
                         ->label(__('packstub-form-builder::form-builder.fields.notify_from_email'))
                         ->email()
                         ->placeholder((string) (config('packstub-form-builder.notifications.from_email') ?: config('mail.from.address')))
-                        ->maxLength(255),
+                        ->maxLength(255)
+                        ->visible(fn (): bool => FormBuilder::allowsCustomFrom()),
                     TextInput::make('settings.notify_from_name')
                         ->label(__('packstub-form-builder::form-builder.fields.notify_from_name'))
                         ->placeholder((string) (config('packstub-form-builder.notifications.from_name') ?: config('mail.from.name')))
@@ -435,6 +443,11 @@ class FormResource extends Resource
                                 ->startsWith(['https://'])
                                 ->required()
                                 ->maxLength(2048)
+                                ->rule(fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
+                                    if (is_string($value) && $value !== '' && ! OutboundUrl::allows($value)) {
+                                        $fail(__('packstub-form-builder::form-builder.fields.webhook_url_private'));
+                                    }
+                                })
                                 ->columnSpan(2),
                         ])
                         ->columns(3)
@@ -452,6 +465,11 @@ class FormResource extends Resource
                         ->helperText(__('packstub-form-builder::form-builder.fields.webhook_url_hint'))
                         ->url()
                         ->maxLength(2048)
+                        ->rule(fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
+                            if (is_string($value) && $value !== '' && ! OutboundUrl::allows($value)) {
+                                $fail(__('packstub-form-builder::form-builder.fields.webhook_url_private'));
+                            }
+                        })
                         ->live(onBlur: true)
                         ->afterStateUpdated(function (?string $state, Get $get, Set $set): void {
                             if (filled($state) && blank($get('settings.webhook_secret'))) {
@@ -572,12 +590,14 @@ class FormResource extends Resource
                         ->helperText(__('packstub-form-builder::form-builder.fields.custom_css_hint'))
                         ->rows(8)
                         ->maxLength(5000)
+                        ->visible(fn (): bool => FormBuilder::allowsCustomCss())
                         ->extraInputAttributes(['spellcheck' => 'false', 'style' => 'font-family: ui-monospace, monospace']),
                     Textarea::make('settings.custom_js')
                         ->label(__('packstub-form-builder::form-builder.fields.custom_js'))
                         ->helperText(__('packstub-form-builder::form-builder.fields.custom_js_hint'))
                         ->rows(8)
                         ->maxLength(2000)
+                        ->visible(fn (): bool => FormBuilder::allowsCustomJs())
                         ->extraInputAttributes(['spellcheck' => 'false', 'style' => 'font-family: ui-monospace, monospace']),
                 ]),
         ];
@@ -648,17 +668,14 @@ class FormResource extends Resource
     }
 
     /**
+     * The users offered under "Notify in the panel": in a tenant, its
+     * members only (FormBuilder::currentPanelUsers()).
+     *
      * @return array<int|string, string>
      */
     protected static function userOptions(): array
     {
-        $model = config('auth.providers.users.model');
-
-        if (! is_string($model) || ! class_exists($model)) {
-            return [];
-        }
-
-        return $model::query()->limit(500)->get()->mapWithKeys(function (Model $user): array {
+        return app(FormBuilder::class)->currentPanelUsers()->mapWithKeys(function (Model $user): array {
             $label = $user->getAttribute('name') ?? $user->getAttribute('email') ?? (string) $user->getKey();
 
             return [$user->getKey() => (string) $label];

@@ -111,3 +111,43 @@ it('notifies the picked users in the panel', function (): void {
     expect(DB::table('notifications')->count())->toBe(2)
         ->and(DB::table('notifications')->where('notifiable_id', $ada->id)->value('data'))->toContain('New submission: Contact', 'Ada Lovelace');
 });
+
+it('puts what the visitor typed into the emails as text, never as HTML or a link', function (): void {
+    Mail::fake();
+    $form = contactForm(['notification_emails' => ['inbox@example.com'], 'settings' => [
+        'autoresponder' => true,
+        'autoresponder_body' => "Hi {name},\n\nThanks for writing.",
+        'autoresponder_include_values' => true,
+    ]]);
+
+    $submission = app(Submitter::class)->submit($form, contactInput($form, [
+        'name' => '<a href="https://evil.test/login">Verify your account</a>',
+        'message' => "[Open](https://evil.test/x) ![x](https://evil.test/p.png)\n# Big **bold**",
+    ]))->submission;
+
+    foreach ([(new Autoresponder($submission))->render(), (new SubmissionNotification($submission))->render()] as $html) {
+        expect($html)->not->toContain('<a href="https://evil.test')
+            ->not->toContain('<img src="https://evil.test')
+            ->toContain('# Big')
+            ->toContain('[Open](https://evil.test/x)');
+    }
+
+    expect((new Autoresponder($submission))->render())->toContain('Hi &lt;a href="https://evil.test/login"&gt;Verify your account&lt;/a&gt;');
+});
+
+it('sends from the app\'s address, not the form\'s, with tenancy', function (): void {
+    config([
+        'packstub-form-builder.tenancy.enabled' => true,
+        'packstub-form-builder.notifications.from_email' => 'forms@platform.test',
+    ]);
+    $form = contactForm(['settings' => ['notify_from_email' => 'ceo@bank.example', 'notify_from_name' => 'Acme']]);
+    $submission = app(Submitter::class)->submit($form, contactInput($form))->submission;
+
+    expect((new SubmissionNotification($submission))->envelope()->from->address)->toBe('forms@platform.test')
+        ->and((new Autoresponder($submission))->envelope()->from->address)->toBe('forms@platform.test')
+        ->and((new Autoresponder($submission))->envelope()->from->name)->toBe('Acme');
+
+    config(['packstub-form-builder.notifications.custom_from' => true]);
+
+    expect((new SubmissionNotification($submission))->envelope()->from->address)->toBe('ceo@bank.example');
+});

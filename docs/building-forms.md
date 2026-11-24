@@ -46,6 +46,8 @@ Every input field also has a label, a **key** (derived from the label; the name 
 
 **Hidden** keeps a field in the design without showing or validating it; old values still appear in exports and columns.
 
+A **Hidden** field type is different: an input the visitor doesn't see, filled with its value (or from the page URL with prefill). The browser sends it like any other input, so a visitor can change it. Use it to tag where a submission came from, never for a price, a user id or anything your code trusts; set those in a sink or a `SubmissionReceived` listener instead.
+
 **Address** asks for a street (two lines), city, state or region, postal code and country in plain inputs with the browser's address autocomplete, and stores them as one object. The table and the emails show it on one line; the CSV and Excel exports give each part its own column.
 
 Keys must be unique within a form; the builder refuses duplicates and the model suffixes a missing one.
@@ -82,7 +84,7 @@ use Packstub\FormBuilder\Facades\FormBuilder;
 FormBuilder::choices('courses', fn () => Course::query()->orderBy('name')->pluck('name', 'id'), 'Courses');
 ```
 
-A source is a closure (it receives the `Field`), a `value => label` array, or a class implementing `Packstub\FormBuilder\Contracts\ChoiceSource` (also accepted in config `choice_sources`). It runs when the form renders and again on submit, so validation uses the live list, and inside the current tenant, so tenant-scoped queries just work. The key is stored; tables, emails and exports show the label, and the key once the record is gone.
+A source is a closure (it receives the `Field`), a `value => label` array, or a class implementing `Packstub\FormBuilder\Contracts\ChoiceSource` (also accepted in config `choice_sources`). It runs when the form renders and again on submit, so validation uses the live list, and inside a tenant: the current one in the panel, the form's own on public pages and in queued jobs (set as Filament's current tenant), so queries scoped to `Filament::getTenant()` only see the form's rows. With your own `tenancy.resolver`, scope the query yourself: `$field->form` is the form. The key is stored; tables, emails and exports show the label, and the key once the record is gone.
 
 ## Validation
 

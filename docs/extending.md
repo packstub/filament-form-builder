@@ -68,7 +68,19 @@ Point `models.form` / `models.submission` / `models.webhook_delivery` / `models.
 
 ## Tenancy
 
-With `tenancy.enabled`, forms carry the current tenant's key in `tenancy.column` (`tenant_id`): the one Filament resolves in a panel with `->tenant()`, or what the `tenancy.resolver` callable returns. Queries see the current tenant's forms only (outside a tenant, the public routes see every form) and new forms get the key on creation; `$form->tenant()` is a `BelongsTo` to `tenancy.model`. With a database per tenant ([Filament Tenancy](https://packstub.dev/docs/filament-tenancy)) leave it off: each tenant has its own tables. To limit forms or submissions per plan, gate the resource with [Filament Features](https://packstub.dev/docs/filament-features) in `authorize()`.
+With `tenancy.enabled`, forms carry the current tenant's key in `tenancy.column` (`tenant_id`): the one Filament resolves in a panel with `->tenant()`, or what the `tenancy.resolver` callable returns. Queries see the current tenant's forms only (outside a tenant, the public routes see every form) and new forms get the key on creation; `$form->tenant()` is a `BelongsTo` to `tenancy.model`, by default the tenant model of the panel that runs the plugin. The links to a form's submissions in emails, panel notifications and chat messages carry the form's tenant, so they open in the right workspace. With a database per tenant ([Filament Tenancy](https://packstub.dev/docs/filament-tenancy)) leave it off: each tenant has its own tables. To limit forms or submissions per plan, gate the resource with [Filament Features](https://packstub.dev/docs/filament-features) in `authorize()`.
+
+**Notify in the panel** offers the members of the current tenant only and skips a picked user who has left when a submission arrives. Members come from the tenant's relationship to its users in one query: `tenancy.members`, or a `members` or `users` relationship when the tenant model has one. Without one, the picker asks `canAccessTenant()` of the first 2,000 users one by one, so name the relationship, or narrow the query:
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Packstub\FormBuilder\Facades\FormBuilder;
+
+FormBuilder::panelUsersUsing(fn (Builder $query, ?Model $tenant): Builder => $tenant
+    ? $query->whereRelation('teams', 'teams.id', $tenant->getKey())
+    : $query);
+```
 
 ## Ownership
 

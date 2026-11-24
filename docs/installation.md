@@ -51,4 +51,4 @@ If your site has a catch-all route (a CMS), make sure `forms` and `f` are exclud
 
 ## Scheduling
 
-Add `form-builder:prune` to the scheduler when a form keeps submissions for a limited time or old ones should lose their IP address (see [Submissions](submissions.md#retention)).
+Add `form-builder:prune` to the scheduler when a form keeps submissions for a limited time, old ones should lose their IP address, or a form with file fields doesn't store submissions (its uploads are deleted after `uploads.orphan_days`) (see [Submissions](submissions.md#retention)).

@@ -5,6 +5,8 @@ namespace Packstub\FormBuilder\Filament;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use OpenSpout\Common\Entity\Cell;
+use OpenSpout\Common\Entity\Cell\StringCell;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
 use Packstub\FormBuilder\Models\Form;
@@ -108,10 +110,10 @@ class SubmissionsExport
         $handle ??= fopen('php://output', 'w');
         [$header, $rows] = static::rows($form, $submissions);
 
-        fputcsv($handle, $header);
+        fputcsv($handle, array_map(static::csvCell(...), $header));
 
         foreach ($rows as $row) {
-            fputcsv($handle, $row);
+            fputcsv($handle, array_map(static::csvCell(...), $row));
         }
 
         if ($handle !== null && is_resource($handle) && stream_get_meta_data($handle)['uri'] === 'php://output') {
@@ -131,9 +133,32 @@ class SubmissionsExport
         $writer->addRow(Row::fromValues($header));
 
         foreach ($rows as $row) {
-            $writer->addRow(Row::fromValues(array_map(fn ($value) => $value ?? '', $row)));
+            $writer->addRow(new Row(array_map(static::xlsxCell(...), $row)));
         }
 
         $writer->close();
+    }
+
+    /**
+     * A value for a CSV cell that a spreadsheet won't run: text starting
+     * with =, +, -, @, a tab or a carriage return (a formula once opened in
+     * Excel or Sheets) gets a leading apostrophe. Numbers stay as they are.
+     */
+    public static function csvCell(mixed $value): mixed
+    {
+        if (! is_string($value) || $value === '' || is_numeric($value)) {
+            return $value;
+        }
+
+        return in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true) ? "'".$value : $value;
+    }
+
+    /**
+     * An XLSX cell: text is always a string cell, never a formula (OpenSpout
+     * turns a string starting with = into one).
+     */
+    public static function xlsxCell(mixed $value): Cell
+    {
+        return is_string($value) && $value !== '' ? new StringCell($value, null) : Cell::fromValue($value ?? '');
     }
 }

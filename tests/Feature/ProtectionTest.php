@@ -5,9 +5,12 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Packstub\FormBuilder\Events\SpamDetected;
 use Packstub\FormBuilder\Exceptions\FormClosedException;
+use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\FormSubmission;
+use Packstub\FormBuilder\Submissions\Captcha;
 use Packstub\FormBuilder\Submissions\PasswordGate;
 use Packstub\FormBuilder\Submissions\ProtectionToken;
+use Packstub\FormBuilder\Submissions\SpamGuard;
 use Packstub\FormBuilder\Submissions\SubmissionContext;
 use Packstub\FormBuilder\Submissions\Submitter;
 
@@ -201,7 +204,7 @@ it('anonymises and prunes old submissions', function (): void {
     $recent->forceFill(['created_at' => now()->subDays(20)])->save();
     $kept->forceFill(['created_at' => now()->subDays(400)])->save();
 
-    $this->artisan('form-builder:prune', ['--dry-run' => true])->expectsOutputToContain('Would delete 1 submission(s), would anonymise 3.')->assertSuccessful();
+    $this->artisan('form-builder:prune', ['--dry-run' => true])->expectsOutputToContain('Would delete 1 submission(s), would anonymise 3, would delete 0 unused upload(s).')->assertSuccessful();
     expect(FormSubmission::query()->count())->toBe(3);
 
     $this->artisan('form-builder:prune')->assertSuccessful();
@@ -219,4 +222,91 @@ it('still rejects tokens of other forms and unsigned ones', function (): void {
 
     expect($tokens->isUsed($form, 'garbage'))->toBeFalse()
         ->and($tokens->age($form, $tokens->make(contactForm(['slug' => 'b']))))->toBeNull();
+});
+
+it('asks to reload the page once the token is older than token_ttl', function (): void {
+    config(['packstub-form-builder.spam.token_ttl' => 60]);
+    $form = contactForm(['settings' => ['visibility' => 'private']]);
+    $tokens = app(ProtectionToken::class);
+    $old = $tokens->make($form, time() - 61 * 60);
+
+    expect($tokens->isExpired($form, $old))->toBeTrue()
+        ->and($tokens->isExpired($form, $tokens->make($form)))->toBeFalse();
+
+    $this->postJson('/forms/contact', contactInput($form, ['_fb_token' => $old]))
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'This page has expired. Please reload it and send the form again.');
+    $this->postJson('/forms/contact/validate', ['_fb_fields' => ['name'], 'name' => 'Ada', '_fb_token' => $old])->assertStatus(422);
+
+    expect(FormSubmission::query()->count())->toBe(0);
+
+    $this->postJson('/forms/contact', contactInput($form))->assertOk();
+    expect(FormSubmission::query()->count())->toBe(1);
+});
+
+it('claims a token before storing, so a racing second post is dropped', function (): void {
+    $form = contactForm();
+    $input = contactInput($form);
+
+    // The other request claimed the token after this one's spam check passed.
+    app()->instance(SpamGuard::class, new class(app(ProtectionToken::class)) extends SpamGuard
+    {
+        public function reason(Form $form, array $input, SubmissionContext $context): ?string
+        {
+            app(ProtectionToken::class)->claim($form, $input['_fb_token']);
+
+            return null;
+        }
+    });
+
+    $result = app(Submitter::class)->submit($form, $input, new SubmissionContext);
+
+    expect($result->spam)->toBeTrue()
+        ->and(FormSubmission::query()->count())->toBe(0);
+});
+
+it('checks the submission limit again with the form locked, so a racing post can\'t take the last place', function (): void {
+    $form = contactForm(['settings' => ['max_submissions' => 1, 'full_message' => 'All seats are taken.']]);
+
+    // Another request stores the last place after this one passed the first check.
+    app()->instance(SpamGuard::class, new class(app(ProtectionToken::class)) extends SpamGuard
+    {
+        public function reason(Form $form, array $input, SubmissionContext $context): ?string
+        {
+            FormSubmission::query()->create(['form_id' => $form->getKey(), 'number' => 1, 'data' => []]);
+
+            return null;
+        }
+    });
+
+    expect(fn () => app(Submitter::class)->submit($form, contactInput($form), new SubmissionContext))
+        ->toThrow(FormClosedException::class, 'All seats are taken.')
+        ->and(FormSubmission::query()->count())->toBe(1);
+});
+
+it('refuses a captcha solved on another site or for another reCAPTCHA action', function (): void {
+    config()->set('packstub-form-builder.captcha.turnstile', ['site_key' => 'site', 'secret' => 'secret']);
+    config()->set('packstub-form-builder.captcha.recaptcha', ['site_key' => 'site', 'secret' => 'secret', 'min_score' => 0.5]);
+    config()->set('packstub-form-builder.spam.allowed_origins', ['*.acme.test']);
+    $form = contactForm(['settings' => ['captcha' => 'turnstile']]);
+    $captcha = app(Captcha::class);
+
+    Http::fake([
+        'challenges.cloudflare.com/*' => Http::sequence()
+            ->push(['success' => true, 'hostname' => 'evil.example'])
+            ->push(['success' => true, 'hostname' => 'www.acme.test'])
+            ->push(['success' => true, 'hostname' => 'localhost']),
+        'www.google.com/*' => Http::sequence()
+            ->push(['success' => true, 'score' => 0.9, 'action' => 'login', 'hostname' => 'localhost'])
+            ->push(['success' => true, 'score' => 0.9, 'action' => 'submit', 'hostname' => 'localhost']),
+    ]);
+
+    expect($captcha->verify($form, ['cf-turnstile-response' => 'x']))->toBe('The captcha could not be verified. Please try again.')
+        ->and($captcha->verify($form, ['cf-turnstile-response' => 'x']))->toBeNull()
+        ->and($captcha->verify($form, ['cf-turnstile-response' => 'x']))->toBeNull();
+
+    $form->settings = ['captcha' => 'recaptcha'];
+
+    expect($captcha->verify($form, ['g-recaptcha-response' => 'x']))->toBe('The captcha could not be verified. Please try again.')
+        ->and($captcha->verify($form, ['g-recaptcha-response' => 'x']))->toBeNull();
 });

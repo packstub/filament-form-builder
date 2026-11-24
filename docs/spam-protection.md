@@ -8,7 +8,7 @@ A text input a person never sees (moved off-screen, excluded from the tab order 
 
 ## Time trap and single-use token
 
-The rendered form carries an encrypted token with the form id, the time it was rendered and a nonce. A submission whose token is missing, tampered with, issued for another form, or younger than `spam.min_seconds` (default 2) is dropped, and a token that already produced a submission cannot produce another (remembered for `spam.token_ttl` minutes, 120 by default). Per form: **Minimum seconds before submit**; 0 disables the time trap. Headless clients get a token from the definition endpoint and send it back under `protection.token_field`.
+The rendered form carries an encrypted token with the form id, the time it was rendered and a nonce. A submission whose token is missing, tampered with, issued for another form, or younger than `spam.min_seconds` (default 2) is dropped, and a token that already produced a submission cannot produce another. A token is valid for `spam.token_ttl` minutes (1440, a day, by default); after that the visitor is asked to reload the page, and a headless client fetches a new one. Per form: **Minimum seconds before submit**; 0 disables the time trap. Headless clients get a token from the definition endpoint and send it back under `protection.token_field`.
 
 ## Rate limit
 
@@ -31,11 +31,11 @@ A submission whose `Origin` (or `Referer`) host is not on `allowed_origins` (whe
 
 ## Captcha
 
-Cloudflare Turnstile, hCaptcha and Google reCAPTCHA v3, verified on the server. Put the keys in `captcha` (or the `TURNSTILE_*`, `HCAPTCHA_*`, `RECAPTCHA_*` environment variables), then pick the provider per form under Settings › Spam protection, or set `captcha.default` for every form. Providers without keys are not offered. The widget renders in the Blade and Livewire renderers and on the hosted page; a missing or failed verification answers a validation error on `captcha`. Headless clients read the provider, site key and the input name from `protection.captcha` in the definition and post the widget's response under that name.
+Cloudflare Turnstile, hCaptcha and Google reCAPTCHA v3, verified on the server. Put the keys in `captcha` (or the `TURNSTILE_*`, `HCAPTCHA_*`, `RECAPTCHA_*` environment variables), then pick the provider per form under Settings › Spam protection, or set `captcha.default` for every form. Providers without keys are not offered. The widget renders in the Blade and Livewire renderers and on the hosted page; a missing or failed verification answers a validation error on `captcha`. A reCAPTCHA token must be for the `submit` action the form's script asks for, and with `spam.allowed_origins` set the provider's hostname must be this site or one of those hosts. Headless clients read the provider, site key and the input name from `protection.captcha` in the definition and post the widget's response under that name.
 
 ## One per person and limits
 
-**One submission per person** (by user id when signed in, else by a hash of the IP address and the user agent) and **Maximum submissions** are in Settings › Limits; both answer with a message of your own.
+**One submission per person** (by user id when signed in, else by a hash of the IP address and the user agent) and **Maximum submissions** are in Settings › Limits; both answer with a message of your own. For guests, one per person is a courtesy limit: another browser or network counts as another person. Turn on **Require a logged-in user** where it must hold.
 
 ## What the sender sees
 

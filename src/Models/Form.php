@@ -64,7 +64,8 @@ class Form extends Model
     protected static function booted(): void
     {
         static::saving(function (self $form): void {
-            $form->slug = Str::slug($form->slug ?: $form->name);
+            // A name without a letter or digit to slug ("!!!") gets a random slug.
+            $form->slug = Str::slug($form->slug ?: $form->name) ?: 'form-'.Str::lower(Str::random(8));
             $form->fields = static::normalizeFieldDefinitions($form->fields ?? []);
             $form->resolvedSections = null;
         });
@@ -163,7 +164,7 @@ class Form extends Model
             if ($loose->isNotEmpty()) {
                 $key = 'section_'.(++$index);
                 $fields = $loose
-                    ->map(fn (array $item): ?Field => Field::fromArray($item, $registry, $key))
+                    ->map(fn (array $item): ?Field => Field::fromArray($item, $registry, $key, $this))
                     ->filter(fn (?Field $field): bool => $field !== null && ! $field->hidden)
                     ->values();
                 $sections->push(new Section($key, null, null, Conditions::always(), $fields, implicit: true));
@@ -187,7 +188,7 @@ class Form extends Model
                 $key = Str::slug((string) ($data['key'] ?? ''), '_') ?: 'section_'.($index + 1);
                 $index++;
                 $fields = collect(is_array($data['fields'] ?? null) ? $data['fields'] : [])
-                    ->map(fn ($child): ?Field => is_array($child) ? Field::fromArray($child, $registry, $key) : null)
+                    ->map(fn ($child): ?Field => is_array($child) ? Field::fromArray($child, $registry, $key, $this) : null)
                     ->filter(fn (?Field $field): bool => $field !== null && ! $field->hidden)
                     ->values();
 
@@ -263,7 +264,7 @@ class Form extends Model
 
             if (($item['type'] ?? null) === self::SECTION_TYPE) {
                 foreach ((array) data_get($item, 'data.fields', []) as $child) {
-                    if (is_array($child) && ($field = Field::fromArray($child, $registry)) !== null && $field->isInput()) {
+                    if (is_array($child) && ($field = Field::fromArray($child, $registry, form: $this)) !== null && $field->isInput()) {
                         $fields->put($field->key, $field);
                     }
                 }
@@ -271,7 +272,7 @@ class Form extends Model
                 continue;
             }
 
-            if (($field = Field::fromArray($item, $registry)) !== null && $field->isInput()) {
+            if (($field = Field::fromArray($item, $registry, form: $this)) !== null && $field->isInput()) {
                 $fields->put($field->key, $field);
             }
         }
@@ -629,18 +630,59 @@ class Form extends Model
         return $max > 0 ? $max : null;
     }
 
+    /**
+     * The form's own CSS, or null when there is none or config
+     * "frontend.custom_css" turns it off (FormBuilder::allowsCustomCss()).
+     */
     public function customCss(): ?string
     {
+        if (! FormBuilder::allowsCustomCss()) {
+            return null;
+        }
+
         $css = $this->setting('custom_css');
 
         return is_string($css) && trim($css) !== '' ? $css : null;
     }
 
+    /**
+     * The form's own JavaScript, or null when there is none or config
+     * "frontend.custom_js" turns it off (FormBuilder::allowsCustomJs()).
+     */
     public function customJs(): ?string
     {
+        if (! FormBuilder::allowsCustomJs()) {
+            return null;
+        }
+
         $js = $this->setting('custom_js');
 
         return is_string($js) && trim($js) !== '' ? $js : null;
+    }
+
+    /**
+     * The custom CSS, safe inside a <style> element: "</" becomes "<\/"
+     * (the same inside a CSS string or comment, and never valid CSS
+     * anywhere else), so nothing in it can close the element, while a
+     * lone "<" such as "@media (width < 600px)" stays as written.
+     */
+    public function inlineCss(): ?string
+    {
+        $css = $this->customCss();
+
+        return $css === null ? null : str_replace('</', '<\\/', $css);
+    }
+
+    /**
+     * The custom JavaScript, safe inside a <script> element: "</" becomes
+     * "<\/" (the same inside a JavaScript string) and "<!--" becomes
+     * "<\!--", so nothing in it can close the element.
+     */
+    public function inlineJs(): ?string
+    {
+        $js = $this->customJs();
+
+        return $js === null ? null : str_replace(['</', '<!--'], ['<\\/', '<\\!--'], $js);
     }
 
     public function pageTitle(): string

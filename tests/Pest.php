@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Hash;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Submissions\ProtectionToken;
 use Packstub\FormBuilder\Tests\Fixtures\RecordingSink;
+use Packstub\FormBuilder\Tests\Fixtures\Team;
 use Packstub\FormBuilder\Tests\Fixtures\User;
 use Packstub\FormBuilder\Tests\TestCase;
 
@@ -127,4 +128,15 @@ function conditionalForm(): Form
             field('text', 'Never', ['key' => 'never', 'hidden' => true, 'required' => true]),
         ],
     ]);
+}
+
+/**
+ * A workspace of the panel with tenancy (Fixtures\TeamPanelProvider), with its members.
+ */
+function createTeam(string $slug, User ...$members): Team
+{
+    $team = Team::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
+    $team->users()->attach(array_map(fn (User $user): int => $user->id, $members));
+
+    return $team;
 }

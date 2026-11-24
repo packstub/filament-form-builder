@@ -94,7 +94,41 @@ final class Uploads
     }
 
     /**
-     * A signed download URL for a file of a submission.
+     * Whether a path is one of the form's own uploads: a file directly in
+     * its directory, never a path a submitter made up to reach another
+     * form's files or anything else on the disk.
+     */
+    public static function owns(Form $form, string $path): bool
+    {
+        if ($path === '' || str_contains($path, '..') || str_contains($path, '\\') || str_contains($path, "\0")) {
+            return false;
+        }
+
+        $directory = self::directory($form);
+
+        return str_starts_with($path, $directory.'/') && ! str_contains(substr($path, strlen($directory) + 1), '/');
+    }
+
+    /**
+     * The stored paths of a submission's file field that belong to its form
+     * (see owns()); download links, attachments and deletion use these only.
+     *
+     * @return array<int, string>
+     */
+    public static function filesOf(FormSubmission $submission, string $field): array
+    {
+        $form = $submission->form;
+
+        if (! $form instanceof Form) {
+            return [];
+        }
+
+        return array_values(array_filter(self::files($submission->value($field)), fn (string $path): bool => self::owns($form, $path)));
+    }
+
+    /**
+     * A signed download URL for a file of a submission, valid for config
+     * "uploads.link_minutes" (null: no expiry).
      */
     public static function url(FormSubmission $submission, string $field, int $index = 0): ?string
     {
@@ -102,11 +136,16 @@ final class Uploads
             return null;
         }
 
-        return URL::signedRoute('packstub-form-builder.file', [
+        $parameters = [
             'submission' => $submission->getKey(),
             'field' => $field,
             'index' => $index,
-        ]);
+        ];
+        $minutes = config('packstub-form-builder.uploads.link_minutes', 1440);
+
+        return is_numeric($minutes) && (int) $minutes > 0
+            ? URL::temporarySignedRoute('packstub-form-builder.file', now()->addMinutes((int) $minutes), $parameters)
+            : URL::signedRoute('packstub-form-builder.file', $parameters);
     }
 
     /**
@@ -121,7 +160,7 @@ final class Uploads
                 continue;
             }
 
-            foreach (self::files($submission->value($key)) as $path) {
+            foreach (self::filesOf($submission, (string) $key) as $path) {
                 $disk->delete($path);
             }
         }

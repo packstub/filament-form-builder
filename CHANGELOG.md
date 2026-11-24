@@ -2,8 +2,41 @@
 
 All notable changes to `packstub/filament-form-builder` are documented here.
 
-## Unreleased
+## 1.5.0 — 2026-11-24
 
+A security release. Please update: most of these fixes matter in a panel with tenancy, where the people who build forms are your customers.
+
+**Upgrading:** with `tenancy.enabled`, a form's custom CSS and JavaScript are off by default; set `frontend.custom_css` or `frontend.custom_js` to `true` to keep them.
+
+**Upgrading:** with `tenancy.enabled`, webhooks and chat channels reach public addresses only; set `webhooks.private_networks` to `true` to allow private ones.
+
+**Upgrading:** a form's token is now valid for `spam.token_ttl` minutes (now 1440 by default): a page open longer asks the visitor to reload it. If you published the config, raise `token_ttl` from 120.
+
+**Upgrading:** with `tenancy.enabled`, a form's own sender address is ignored and its emails come from `notifications.from_email`; set `notifications.custom_from` to `true` to keep it.
+
+- Security: in a panel with tenancy, **Notify in the panel** offered the users of every workspace, and a picked user got the submission's summary from another workspace; it now offers and notifies the workspace's members only (`tenancy.members` names the relationship)
+- Security: a form's custom CSS could close its `<style>` element and run a script on the page; both renderers now neutralise `</` in it (a `<` such as `@media (width < 600px)` stays as written)
+- Security: a file field accepted any stored path, so a submission could name another file on the uploads disk; it now takes the form's own uploads only
+- Security: a condition value or a redirect URL could run a script on the form's page, and visitor values became HTML in the emails; all three are escaped or checked now
+- Security: a webhook could reach private addresses (cloud metadata, localhost) and follow redirects; it now connects to the checked public address and follows none
+- Security: with tenancy, a choice source on a public page ran outside any workspace and could list every workspace's rows; it now runs inside the form's workspace
+- Security: with tenancy, a form could send its emails as any address on your mailer; the sender address is now yours (`notifications.custom_from`)
+- Security: importing a form's JSON skipped the editor's checks; users, addresses, URLs and code it would refuse are now dropped
+- Security: the endpoint that checks one step of a multi-step form stored uploaded files and ignored private forms and passwords; it now stores nothing, answers only visitors the form would take a submission from, and is rate limited (`submissions.validate_throttle`)
+- Security: the Livewire form's password and submit weren't rate limited; they now use the same limit setting as the HTTP routes (`submissions.throttle`), counted separately
+- Security: a form's token never expired, so it kept a private form open, and two posts racing with one token could both be stored; tokens now expire and are claimed before the insert
+- Security: a value starting with `=` became a live formula in the Excel and CSV exports; exports now keep it as text
+- Security: file download links from the panel never expired; they now last a day (`uploads.link_minutes`)
+- Security: reCAPTCHA must answer for the form's own action, and with `spam.allowed_origins` set a captcha solved on another site is refused
+- Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
+- Fixed: two submissions arriving together could both take a form's or a share link's last place
+- Fixed: a single file posted without `[]` in the field name gave a server error
+- Fixed: a second form whose name gives no slug ("!!!") gave a server error
+- Fixed: files uploaded to a form that doesn't store submissions stayed on the disk; `form-builder:prune` now deletes uploads no submission holds after `uploads.orphan_days`
+- Fixed: with panels of different tenant models, the plugin took the first panel's instead of the current one's
+- Fixed: choices from your data were kept after a failed queued job
+- Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy
+- Fixed: on Filament 5.12, the Livewire form's stylesheet missed the loading placeholder Filament now shows while a field loads
 - `composer.json`'s homepage points at the package's page on packstub.dev
 
 ## 1.4.0 — 2026-10-02

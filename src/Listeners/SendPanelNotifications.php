@@ -4,6 +4,7 @@ namespace Packstub\FormBuilder\Listeners;
 
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Model;
 use Packstub\FormBuilder\Events\SubmissionReceived;
 use Packstub\FormBuilder\FormBuilder;
 use Packstub\FormBuilder\FormBuilderPlugin;
@@ -34,6 +35,19 @@ class SendPanelNotifications
         }
 
         $users = $model::query()->whereKey($ids)->get();
+
+        // A picked user who is no member of the form's tenant (any more) is
+        // not told about its submissions; nobody is, when the tenant can't
+        // be loaded to check.
+        $column = FormBuilder::tenantColumn();
+
+        if ($column !== null && $event->form->getAttribute($column) !== null) {
+            $tenant = FormBuilder::tenantOf($event->form);
+
+            $users = $tenant === null
+                ? $users->take(0)
+                : $users->filter(fn (Model $user): bool => FormBuilder::canAccessTenant($user, $tenant))->values();
+        }
 
         if ($users->isEmpty()) {
             return;

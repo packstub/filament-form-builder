@@ -137,7 +137,9 @@ return [
     |--------------------------------------------------------------------------
     |
     | "throttle" is a Laravel rate limit ("attempts,minutes") applied per IP
-    | to the submit endpoint; null disables it. "store_ip" and
+    | to the submit endpoint; null disables it. "validate_throttle" is the
+    | same for the validate endpoint (a step of a multi-step form), counted
+    | apart from submissions. "store_ip" and
     | "store_user_agent" decide what the submission row records.
     | "retention_days" deletes submissions (and their files) older than that
     | many days when `form-builder:prune` runs (0 keeps everything); a form
@@ -147,6 +149,7 @@ return [
 
     'submissions' => [
         'throttle' => '10,1',
+        'validate_throttle' => '60,1',
         'store_ip' => true,
         'store_user_agent' => true,
         'queue_notifications' => true,
@@ -161,8 +164,11 @@ return [
     |
     | Where the file upload field stores files: a disk and a directory under
     | it. Keep a private disk; the panel serves downloads through a signed
-    | route. "max_kb" is the default size limit; "attach_max_kb" caps what
-    | the notification email attaches.
+    | route, with links valid for "link_minutes" (null: no expiry). "max_kb"
+    | is the default size limit; "attach_max_kb" caps what the notification
+    | email attaches. `form-builder:prune` deletes uploads no submission
+    | holds (a form that doesn't store submissions, a post that failed
+    | validation) once they are "orphan_days" old (0 keeps them).
     |
     */
 
@@ -171,6 +177,8 @@ return [
         'directory' => 'form-builder',
         'max_kb' => 10240,
         'attach_max_kb' => 10240,
+        'link_minutes' => 1440,
+        'orphan_days' => 7,
     ],
 
     /*
@@ -181,9 +189,9 @@ return [
     | The honeypot is a hidden input real users never fill; the time trap
     | rejects submissions posted faster than "min_seconds" after the form
     | was rendered (0 disables it). Both are silent: the visitor sees the
-    | success state and nothing is stored. A token is single-use: the same
-    | one cannot post twice ("token_ttl" is how long that is remembered, in
-    | minutes). "allowed_origins" limits where the form may be posted from
+    | success state and nothing is stored. A token is single-use and valid
+    | for "token_ttl" minutes: an older one asks the visitor to reload the
+    | page, and a used one is remembered that long. "allowed_origins" limits where the form may be posted from
     | (host names, wildcards allowed; empty = anywhere). The blocklist drops
     | submissions that contain a word, an email domain or come from an IP.
     |
@@ -194,7 +202,7 @@ return [
         'honeypot_field' => '_fb_website',
         'min_seconds' => 2,
         'token_field' => '_fb_token',
-        'token_ttl' => 120,
+        'token_ttl' => 1440,
         'allowed_origins' => [],
         'blocklist' => [
             'words' => [],
@@ -238,13 +246,17 @@ return [
     |
     | Defaults for the emails a submission sends; every form can override
     | them in its Notifications settings. Null falls back to the mail
-    | "from" of your app.
+    | "from" of your app. "custom_from" lets a form set its own sender
+    | address; null means on, except with "tenancy.enabled", where the
+    | people who build forms must not send as any address on your mailer
+    | (the sender name stays theirs to set).
     |
     */
 
     'notifications' => [
         'from_email' => env('FORM_BUILDER_FROM_EMAIL'),
         'from_name' => env('FORM_BUILDER_FROM_NAME'),
+        'custom_from' => null,
     ],
 
     /*
@@ -257,6 +269,13 @@ return [
     | Deliveries are queued, retried "attempts" times with a growing delay,
     | and logged for "keep_days" days.
     |
+    | "private_networks" lets webhooks and chat channels reach private,
+    | loopback and reserved addresses (localhost, 10.x, 169.254.169.254...).
+    | Off, a URL must resolve to public addresses only, the request goes to
+    | the address that was checked and follows no redirect. Null means on,
+    | except with "tenancy.enabled", where the people who build forms are
+    | your customers.
+    |
     */
 
     'webhooks' => [
@@ -265,6 +284,7 @@ return [
         'timeout' => 15,
         'keep_days' => 30,
         'verify_ssl' => true,
+        'private_networks' => null,
     ],
 
     /*
@@ -308,6 +328,13 @@ return [
     | steps (the plain POST still works without it). "prefill" lets the
     | page URL's query parameters fill fields of the same key.
     |
+    | "custom_css" and "custom_js" are the form's own CSS and JavaScript
+    | (Design tab), printed with the form by both renderers. Turn them off
+    | where the people who build forms must not run code on your pages (a
+    | panel your customers sign in to): the fields leave the editor and
+    | whatever a form has stored is no longer printed. Null means on,
+    | except with "tenancy.enabled".
+    |
     | Livewire renderer: "livewire_assets" puts Filament's colour variables,
     | scripts and the renderer's stylesheet on any page that renders
     | <livewire:form-builder> and does not print @filamentStyles /
@@ -324,6 +351,8 @@ return [
         'styles' => true,
         'enhance' => true,
         'prefill' => true,
+        'custom_css' => null,
+        'custom_js' => null,
         'livewire_assets' => true,
         'livewire_theme' => null,
     ],
@@ -337,8 +366,11 @@ return [
     | "column" when it is created, and queries only see the current tenant's
     | forms. The current tenant is Filament's (a panel with ->tenant()) or
     | what "resolver" (a callable) returns. "model" is the tenant model, for
-    | the relationship. With a database per tenant (Filament Tenancy) leave
-    | this off: each tenant has its own tables.
+    | the relationship and the panel links in emails (null = the one of the
+    | panel that runs the plugin). "members" is the tenant's relationship to
+    | its users, which "Notify in the panel" offers (null = "members" or
+    | "users" when the tenant model has one). With a database per tenant
+    | (Filament Tenancy) leave this off: each tenant has its own tables.
     |
     */
 
@@ -346,6 +378,7 @@ return [
         'enabled' => false,
         'column' => 'tenant_id',
         'model' => null,
+        'members' => null,
         'resolver' => null,
     ],
 

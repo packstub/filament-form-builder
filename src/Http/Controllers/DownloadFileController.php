@@ -19,7 +19,7 @@ class DownloadFileController
         abort_unless($request->hasValidSignature(), 403);
 
         $record = FormBuilder::submissionModel()::query()->findOrFail($submission);
-        $files = Uploads::files($record->value($field));
+        $files = Uploads::filesOf($record, $field);
         $path = $files[$index] ?? abort(404);
 
         $disk = Storage::disk(Uploads::disk());

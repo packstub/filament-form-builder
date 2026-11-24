@@ -2,6 +2,7 @@
 
 namespace Packstub\FormBuilder\Fields;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 /**
@@ -44,14 +45,16 @@ final class Field
         public readonly array $validation = [],
         public readonly ?string $message = null,
         public readonly ?string $section = null,
+        public readonly ?Model $form = null,
     ) {}
 
     /**
-     * Build a field from one builder item: ['type' => 'text', 'data' => [...]].
+     * Build a field from one builder item: ['type' => 'text', 'data' => [...]],
+     * of $form (the form it belongs to, when known).
      *
      * @param  array<string, mixed>  $item
      */
-    public static function fromArray(array $item, FieldTypeRegistry $registry, ?string $section = null): ?self
+    public static function fromArray(array $item, FieldTypeRegistry $registry, ?string $section = null, ?Model $form = null): ?self
     {
         $type = $registry->find((string) ($item['type'] ?? ''));
 
@@ -85,6 +88,7 @@ final class Field
             validation: self::normalizeValidation($data['validation'] ?? []),
             message: self::nullableString($data['message'] ?? null),
             section: $section,
+            form: $form,
         );
     }
 
