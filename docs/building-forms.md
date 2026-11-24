@@ -46,6 +46,8 @@ Every input field also has a label, a **key** (derived from the label; the name 
 
 **Hidden** keeps a field in the design without showing or validating it; old values still appear in exports and columns.
 
+A **Hidden** field type is different: an input the visitor doesn't see, filled with its value (or from the page URL with prefill). The browser sends it like any other input, so a visitor can change it. Use it to tag where a submission came from, never for a price, a user id or anything your code trusts; set those in a sink or a `SubmissionReceived` listener instead.
+
 **Address** asks for a street (two lines), city, state or region, postal code and country in plain inputs with the browser's address autocomplete, and stores them as one object. The table and the emails show it on one line; the CSV and Excel exports give each part its own column.
 
 Keys must be unique within a form; the builder refuses duplicates and the model suffixes a missing one.
