@@ -486,6 +486,7 @@ return [
         'success' => 'Thank you, your message has been sent.',
         'invalid' => 'Please check the highlighted fields.',
         'failed' => 'Something went wrong. Please try again.',
+        'too_many' => 'Too many attempts. Please wait a minute and try again.',
         'closed' => 'This form is closed.',
         'not_open_yet' => 'This form is not open yet.',
         'full' => 'This form is no longer accepting submissions.',

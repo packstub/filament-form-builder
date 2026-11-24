@@ -12,6 +12,7 @@ use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
@@ -244,10 +245,41 @@ class FormBuilderForm extends Component implements HasForms
         return $values;
     }
 
+    /**
+     * Whether the visitor's IP used up its attempts at an action: the same
+     * limit as the HTTP routes (config "submissions.throttle"), counted per
+     * action and IP. The panel preview is never limited.
+     */
+    protected function tooManyAttempts(string $action): bool
+    {
+        $throttle = config('packstub-form-builder.submissions.throttle', '10,1');
+
+        if ($this->preview || ! is_string($throttle) || $throttle === '') {
+            return false;
+        }
+
+        [$max, $minutes] = array_map('intval', array_pad(explode(',', $throttle), 2, '1'));
+        $key = 'packstub-form-builder:livewire:'.$action.':'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, max(1, $max))) {
+            return true;
+        }
+
+        RateLimiter::hit($key, max(1, $minutes) * 60);
+
+        return false;
+    }
+
     public function unlock(): void
     {
         $model = $this->getFormModel();
         $gate = app(PasswordGate::class);
+
+        if ($this->tooManyAttempts('unlock')) {
+            $this->passwordError = __('packstub-form-builder::form-builder.frontend.too_many');
+
+            return;
+        }
 
         if (! $gate->matches($model, $this->password)) {
             $this->passwordError = __('packstub-form-builder::form-builder.frontend.password_wrong');
@@ -264,6 +296,12 @@ class FormBuilderForm extends Component implements HasForms
     public function submit(?string $captcha = null): void
     {
         $model = $this->getFormModel();
+
+        if ($this->tooManyAttempts('submit')) {
+            $this->error = __('packstub-form-builder::form-builder.frontend.too_many');
+
+            return;
+        }
         app()->instance('packstub-form-builder.current-form', $model);
         $state = $this->form->getState();
 
