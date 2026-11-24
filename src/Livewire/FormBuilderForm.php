@@ -283,7 +283,7 @@ class FormBuilderForm extends Component implements HasForms
 
         try {
             if ($this->preview) {
-                app(Submitter::class)->validate($model, $input);
+                app(Submitter::class)->validate($model, $input, store: false);
                 $this->submitted = true;
                 $this->message = $model->successMessage();
 

@@ -1,8 +1,11 @@
 <?php
 
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Packstub\FormBuilder\Fields\ValidationRules;
 use Packstub\FormBuilder\Models\Form;
+use Packstub\FormBuilder\Submissions\ProtectionToken;
 use Packstub\FormBuilder\Submissions\Submitter;
 
 it('groups fields into sections with an implicit one for loose fields', function (): void {
@@ -127,4 +130,38 @@ it('turns picked rules into Laravel rules with custom messages', function (): vo
 
     expect($errors['code'][0])->toBe('Give us a proper code.')
         ->and($errors['age'][0])->toContain('greater than 17');
+});
+
+it('stores nothing when validating a step with a file', function (): void {
+    Storage::fake('local');
+    Form::query()->create(['name' => 'Apply', 'slug' => 'apply', 'fields' => [field('file', 'CV', ['key' => 'cv'])]]);
+
+    $this->post('/forms/apply/validate', ['_fb_fields' => ['cv'], 'cv' => [UploadedFile::fake()->create('cv.pdf', 10)]], ['Accept' => 'application/json'])
+        ->assertOk();
+    $this->postJson('/forms/apply/validate', ['_fb_fields' => ['cv'], 'cv' => [['name' => 'cv.pdf', 'data' => 'data:application/pdf;base64,'.base64_encode('%PDF')]]])
+        ->assertOk();
+
+    expect(Storage::disk('local')->allFiles())->toBe([]);
+});
+
+it('validates a step only for a visitor the form would take a submission from', function (): void {
+    contactForm(['slug' => 'locked', 'settings' => ['password' => 'open-sesame']]);
+    $private = contactForm(['slug' => 'private', 'settings' => ['visibility' => 'private']]);
+    contactForm(['slug' => 'closed', 'is_active' => false]);
+
+    $this->postJson('/forms/locked/validate', ['_fb_fields' => ['name'], 'name' => 'Ada'])->assertForbidden();
+    $this->postJson('/forms/private/validate', ['_fb_fields' => ['name'], 'name' => 'Ada'])->assertForbidden();
+    $this->postJson('/forms/closed/validate', ['_fb_fields' => ['name'], 'name' => 'Ada'])->assertForbidden();
+
+    $this->postJson('/forms/private/validate', ['_fb_fields' => ['name'], 'name' => 'Ada', '_fb_token' => app(ProtectionToken::class)->make($private)])->assertOk();
+});
+
+it('rate limits the validate endpoint apart from submissions', function (): void {
+    $this->rebootWith(['packstub-form-builder.submissions.validate_throttle' => '2,1', 'packstub-form-builder.submissions.throttle' => '5,1']);
+    wizardForm();
+
+    $this->postJson('/forms/registration/validate', ['_fb_step' => 1])->assertStatus(422);
+    $this->postJson('/forms/registration/validate', ['_fb_step' => 1])->assertStatus(422);
+    $this->postJson('/forms/registration/validate', ['_fb_step' => 1])->assertStatus(429);
+    expect($this->postJson('/forms/registration', [])->status())->not->toBe(429);
 });

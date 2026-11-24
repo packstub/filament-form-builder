@@ -137,7 +137,9 @@ return [
     |--------------------------------------------------------------------------
     |
     | "throttle" is a Laravel rate limit ("attempts,minutes") applied per IP
-    | to the submit endpoint; null disables it. "store_ip" and
+    | to the submit endpoint; null disables it. "validate_throttle" is the
+    | same for the validate endpoint (a step of a multi-step form), counted
+    | apart from submissions. "store_ip" and
     | "store_user_agent" decide what the submission row records.
     | "retention_days" deletes submissions (and their files) older than that
     | many days when `form-builder:prune` runs (0 keeps everything); a form
@@ -147,6 +149,7 @@ return [
 
     'submissions' => [
         'throttle' => '10,1',
+        'validate_throttle' => '60,1',
         'store_ip' => true,
         'store_user_agent' => true,
         'queue_notifications' => true,

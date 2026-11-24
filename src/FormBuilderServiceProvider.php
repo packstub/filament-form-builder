@@ -115,8 +115,10 @@ class FormBuilderServiceProvider extends PackageServiceProvider
         $middleware = (array) config('packstub-form-builder.routes.middleware', ['web']);
         $throttle = config('packstub-form-builder.submissions.throttle', '10,1');
         $throttled = array_values(array_filter([...$middleware, $throttle ? "throttle:{$throttle}" : null]));
+        $validateThrottle = config('packstub-form-builder.submissions.validate_throttle', '60,1');
+        $validateMiddleware = array_values(array_filter([...$middleware, $validateThrottle ? "throttle:{$validateThrottle},packstub-form-builder-validate" : null]));
 
-        Route::prefix($prefix)->name('packstub-form-builder.')->group(function () use ($middleware, $throttled): void {
+        Route::prefix($prefix)->name('packstub-form-builder.')->group(function () use ($middleware, $throttled, $validateMiddleware): void {
             Route::get('files/{submission}/{field}/{index?}', DownloadFileController::class)
                 ->where('submission', '[0-9]+')
                 ->where('index', '[0-9]+')
@@ -127,7 +129,7 @@ class FormBuilderServiceProvider extends PackageServiceProvider
                 ->name('submit');
 
             Route::post('{form}/validate', ValidateFormController::class)
-                ->middleware($middleware)
+                ->middleware($validateMiddleware)
                 ->name('validate');
 
             Route::post('{form}/unlock', UnlockFormController::class)

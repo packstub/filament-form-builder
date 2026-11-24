@@ -40,18 +40,7 @@ class Submitter
     {
         $context ??= new SubmissionContext;
 
-        $this->assertOpen($form, $context);
-        $link = $this->shareLink($form, $this->tokens->link($form, $input[$this->tokens->field()] ?? null) ?? $input[ShareLink::FIELD] ?? null);
-
-        // A private form takes a submission only from a render the server
-        // made (its own page, a signed URL, an active share link).
-        if (! $context->trusted && $form->isPrivate() && $link === null && ! $this->tokens->isValid($form, $input[$this->tokens->field()] ?? null)) {
-            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.private'));
-        }
-
-        if (! $context->trusted && ! $this->passwords->keyIsValid($form, $input[PasswordGate::FIELD] ?? null)) {
-            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.password_required'));
-        }
+        $link = $this->assertCanPost($form, $input, $context);
 
         if (! $context->trusted && ($reason = $this->spam->reason($form, $input, $context)) !== null) {
             $this->events->dispatch(new SpamDetected($form, $reason, $input, $context));
@@ -80,6 +69,32 @@ class Submitter
         $this->events->dispatch(new SubmissionReceived($form, $submission, $context));
 
         return new SubmissionResult($form, $submission);
+    }
+
+    /**
+     * Whether the input may be posted to the form at all: open, the visitor
+     * signed in when it must be, a render the server made for a private
+     * form (its own page, a signed URL, an active share link) and the
+     * password key. Returns the share link it came through, if any.
+     *
+     * @param  array<string, mixed>  $input
+     *
+     * @throws FormClosedException
+     */
+    public function assertCanPost(Form $form, array $input, SubmissionContext $context): ?ShareLink
+    {
+        $this->assertOpen($form, $context);
+        $link = $this->shareLink($form, $this->tokens->link($form, $input[$this->tokens->field()] ?? null) ?? $input[ShareLink::FIELD] ?? null);
+
+        if (! $context->trusted && $form->isPrivate() && $link === null && ! $this->tokens->isValid($form, $input[$this->tokens->field()] ?? null)) {
+            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.private'));
+        }
+
+        if (! $context->trusted && ! $this->passwords->keyIsValid($form, $input[PasswordGate::FIELD] ?? null)) {
+            throw new FormClosedException(__('packstub-form-builder::form-builder.frontend.password_required'));
+        }
+
+        return $link;
     }
 
     /**
@@ -156,11 +171,12 @@ class Submitter
      *
      * @param  array<string, mixed>  $input
      * @param  array<int, string>|null  $only  Validate these keys only (a step of a multi-step form).
+     * @param  bool  $store  False to check only: uploaded files are not stored, and values come back as validated, not normalised.
      * @return array<string, mixed>
      *
      * @throws ValidationException
      */
-    public function validate(Form $form, array $input, ?array $only = null): array
+    public function validate(Form $form, array $input, ?array $only = null, bool $store = true): array
     {
         $input = array_diff_key($input, array_flip($this->spam->reservedKeys()));
 
@@ -203,7 +219,7 @@ class Submitter
                 $value = $field->default;
             }
 
-            $data[$field->key] = $field->type->normalize($value, $field);
+            $data[$field->key] = $store ? $field->type->normalize($value, $field) : $value;
         }
 
         return $data;

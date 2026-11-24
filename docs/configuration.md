@@ -19,6 +19,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `routes.embed` | `true` | The embed script route |
 | `routes.share_prefix` | `f` | Where share links live (`/f/{token}`); `null` turns them off |
 | `submissions.throttle` | `10,1` | Rate limit per IP; `null` disables |
+| `submissions.validate_throttle` | `60,1` | Rate limit per IP of the validate endpoint (a step of a multi-step form), counted apart; `null` disables |
 | `submissions.store_ip` | `true` | Record the IP |
 | `submissions.store_user_agent` | `true` | Record the user agent |
 | `submissions.queue_notifications` | `true` | Queue notification emails |
