@@ -1,6 +1,7 @@
 <?php
 
 use Filament\Facades\Filament;
+use Filament\Panel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Mail;
@@ -139,4 +140,18 @@ it('keeps the current workspace when one is set', function (): void {
 
     expect($form->field('member')->choices())->toBe([(string) $this->bob->id => 'Bob'])
         ->and(Filament::getTenant()->is($this->globex))->toBeTrue();
+});
+
+it('takes the tenant model of the current panel when panels differ', function (): void {
+    $other = Filament::getPanel('admin')->getId();
+    $panel = Panel::make()->id('people')->path('people')->tenant(User::class)->plugin(FormBuilderPlugin::make());
+    Filament::registerPanel($panel);
+
+    expect(FormBuilder::tenantModel())->toBe(Team::class);
+
+    Filament::setCurrentPanel($panel);
+
+    expect(FormBuilder::tenantModel())->toBe(User::class);
+
+    Filament::setCurrentPanel($other);
 });

@@ -55,7 +55,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `frontend.livewire_assets` | `true` | Put Filament's frontend on pages that render the Livewire component |
 | `frontend.livewire_theme` | `null` | Its stylesheet: `null` the compiled one, a path or URL, `false` none |
 | `tenancy.enabled` | `false` | Scope forms to a tenant |
-| `tenancy.column`, `model`, `members`, `resolver` | `tenant_id`, `null`, `null`, `null` | The column, the tenant model (the panel's by default), the tenant's relationship to its users (`members` or `users` by default), a callable returning the current tenant (Filament's by default) |
+| `tenancy.column`, `model`, `members`, `resolver` | `tenant_id`, `null`, `null`, `null` | The column, the tenant model (the current panel's by default, else the first panel's with tenancy: set it when panels have different tenant models), the tenant's relationship to its users (`members` or `users` by default), a callable returning the current tenant (Filament's by default) |
 | `ownership.only_own` | `false` | Show each user only the forms they created |
 | `ownership.see_all` | `null` | A gate ability whose users still see every form |
 | `navigation.group`, `icon`, `sort`, `badge` | — | Navigation of the Forms resource |

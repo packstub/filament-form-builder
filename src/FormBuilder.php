@@ -105,8 +105,10 @@ class FormBuilder
     }
 
     /**
-     * The tenant model: config "tenancy.model", else the one of the panel
-     * that runs the plugin (a panel with ->tenant()).
+     * The tenant model: config "tenancy.model", else the one of the current
+     * panel when it runs the plugin with tenancy, else the one of the first
+     * such panel. With panels of different tenant models, set the config:
+     * outside a panel (a public page, a job) there is no telling which.
      *
      * @return class-string<Model>|null
      */
@@ -122,7 +124,9 @@ class FormBuilder
             return null;
         }
 
-        foreach (Filament::getPanels() as $panel) {
+        $current = Filament::getCurrentPanel();
+
+        foreach ([...($current !== null ? [$current] : []), ...Filament::getPanels()] as $panel) {
             if ($panel->hasPlugin(FormBuilderPlugin::ID) && $panel->hasTenancy()) {
                 return $panel->getTenantModel();
             }
