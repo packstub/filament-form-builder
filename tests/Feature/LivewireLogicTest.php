@@ -149,5 +149,5 @@ it('rate limits unlocking and submitting like the HTTP routes', function (): voi
     $other = livewire(FormBuilderForm::class, ['form' => 'other']);
     $other->call('submit');
     $other->call('submit');
-    $other->call('submit')->assertSet('error', 'Too many attempts. Please wait a minute and try again.');
+    $other->call('submit')->assertHasErrors(['form'])->assertSee('Too many attempts. Please wait a minute and try again.')->assertSet('error', null);
 });

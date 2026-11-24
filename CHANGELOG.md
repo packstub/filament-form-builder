@@ -10,6 +10,8 @@ A security release for panels with tenancy. Please update.
 
 **Upgrading:** with `tenancy.enabled`, webhooks and chat channels reach public addresses only; set `webhooks.private_networks` to `true` to allow private ones.
 
+**Upgrading:** a form's token is now valid for `spam.token_ttl` minutes (now 1440 by default): a page open longer asks the visitor to reload it. If you published the config, raise `token_ttl` from 120.
+
 **Upgrading:** with `tenancy.enabled`, a form's own sender address is ignored and its emails come from `notifications.from_email`; set `notifications.custom_from` to `true` to keep it.
 
 - Security: in a panel with tenancy, **Notify in the panel** offered the users of every workspace, and a picked user got the submission's summary from another workspace; it now offers and notifies the workspace's members only (`tenancy.members` names the relationship)
@@ -22,6 +24,7 @@ A security release for panels with tenancy. Please update.
 - Security: importing a form's JSON skipped the editor's checks; users, addresses, URLs and code it would refuse are now dropped
 - Security: the endpoint that checks one step of a multi-step form stored uploaded files and ignored private forms and passwords; it now stores nothing, answers only visitors the form would take a submission from, and is rate limited (`submissions.validate_throttle`)
 - Security: the Livewire form's password and submit weren't rate limited; they now share the HTTP routes' limit (`submissions.throttle`)
+- Security: a form's token never expired, so it kept a private form open, and two posts racing with one token could both be stored; tokens now expire and are claimed before the insert
 - Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
 - Fixed: a single file posted without `[]` in the field name gave a server error
 - Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy

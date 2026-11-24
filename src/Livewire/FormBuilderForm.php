@@ -298,7 +298,7 @@ class FormBuilderForm extends Component implements HasForms
         $model = $this->getFormModel();
 
         if ($this->tooManyAttempts('submit')) {
-            $this->error = __('packstub-form-builder::form-builder.frontend.too_many');
+            $this->addError('form', __('packstub-form-builder::form-builder.frontend.too_many'));
 
             return;
         }
@@ -335,7 +335,7 @@ class FormBuilderForm extends Component implements HasForms
             return;
         } catch (ValidationException $e) {
             foreach ($e->errors() as $key => $messages) {
-                $this->addError($key === 'captcha' ? 'captcha' : 'data.'.$key, $messages[0]);
+                $this->addError(in_array($key, ['captcha', 'form'], true) ? $key : 'data.'.$key, $messages[0]);
             }
 
             return;

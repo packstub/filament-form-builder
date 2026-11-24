@@ -184,9 +184,9 @@ return [
     | The honeypot is a hidden input real users never fill; the time trap
     | rejects submissions posted faster than "min_seconds" after the form
     | was rendered (0 disables it). Both are silent: the visitor sees the
-    | success state and nothing is stored. A token is single-use: the same
-    | one cannot post twice ("token_ttl" is how long that is remembered, in
-    | minutes). "allowed_origins" limits where the form may be posted from
+    | success state and nothing is stored. A token is single-use and valid
+    | for "token_ttl" minutes: an older one asks the visitor to reload the
+    | page, and a used one is remembered that long. "allowed_origins" limits where the form may be posted from
     | (host names, wildcards allowed; empty = anywhere). The blocklist drops
     | submissions that contain a word, an email domain or come from an IP.
     |
@@ -197,7 +197,7 @@ return [
         'honeypot_field' => '_fb_website',
         'min_seconds' => 2,
         'token_field' => '_fb_token',
-        'token_ttl' => 120,
+        'token_ttl' => 1440,
         'allowed_origins' => [],
         'blocklist' => [
             'words' => [],

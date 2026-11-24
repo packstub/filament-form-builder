@@ -34,6 +34,8 @@ class ValidateFormController
             $submitter->assertCanPost($form, $input, SubmissionContext::fromRequest($request, 'json'));
         } catch (FormClosedException $e) {
             return response()->json(['ok' => false, 'message' => $e->getMessage(), 'errors' => ['form' => [$e->getMessage()]]], 403);
+        } catch (ValidationException $e) {
+            return response()->json(['ok' => false, 'message' => $e->errors()['form'][0] ?? __('packstub-form-builder::form-builder.frontend.invalid'), 'errors' => $e->errors()], 422);
         }
 
         $keys = $request->input('_fb_fields');

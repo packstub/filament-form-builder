@@ -47,6 +47,10 @@
                 <script src="{{ $captcha['script'] }}" async defer></script>
             @endif
 
+            @error('form')
+                <p class="fb-error" role="alert" style="margin-top: 1rem">{{ $message }}</p>
+            @enderror
+
             @unless ($model->isWizard())
                 <div class="fb-actions" style="margin-top: 1.5rem">
                     <x-filament::button type="submit" wire:loading.attr="disabled">

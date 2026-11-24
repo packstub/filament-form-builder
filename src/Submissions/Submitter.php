@@ -56,15 +56,28 @@ class Submitter
         $data = $this->validate($form, $input);
         $submission = $this->build($form, $data, $context);
         $submission->share_link_id = $link?->getKey();
+        $token = $input[$this->tokens->field()] ?? null;
 
-        if ($form->store_submissions) {
-            DB::transaction(function () use ($form, $submission): void {
-                $submission->number = $this->nextNumber($form);
-                $submission->save();
-            });
+        // Claimed before the insert, so two posts racing with one token
+        // can't both be stored.
+        if (! $this->tokens->claim($form, $token) && ! $context->trusted) {
+            $this->events->dispatch(new SpamDetected($form, 'reused_token', $input, $context));
+
+            return new SubmissionResult($form, null, spam: true);
         }
 
-        $this->tokens->markUsed($form, $input[$this->tokens->field()] ?? null);
+        try {
+            if ($form->store_submissions) {
+                DB::transaction(function () use ($form, $submission): void {
+                    $submission->number = $this->nextNumber($form);
+                    $submission->save();
+                });
+            }
+        } catch (\Throwable $e) {
+            $this->tokens->release($form, $token);
+
+            throw $e;
+        }
 
         $this->events->dispatch(new SubmissionReceived($form, $submission, $context));
 
@@ -75,15 +88,22 @@ class Submitter
      * Whether the input may be posted to the form at all: open, the visitor
      * signed in when it must be, a render the server made for a private
      * form (its own page, a signed URL, an active share link) and the
-     * password key. Returns the share link it came through, if any.
+     * password key. Returns the share link it came through, if any. A
+     * token older than "spam.token_ttl" is a validation error on "form":
+     * the page has to be reloaded.
      *
      * @param  array<string, mixed>  $input
      *
      * @throws FormClosedException
+     * @throws ValidationException
      */
     public function assertCanPost(Form $form, array $input, SubmissionContext $context): ?ShareLink
     {
         $this->assertOpen($form, $context);
+
+        if (! $context->trusted && $this->tokens->isExpired($form, $input[$this->tokens->field()] ?? null)) {
+            throw ValidationException::withMessages(['form' => [__('packstub-form-builder::form-builder.frontend.expired')]]);
+        }
         $link = $this->shareLink($form, $this->tokens->link($form, $input[$this->tokens->field()] ?? null) ?? $input[ShareLink::FIELD] ?? null);
 
         if (! $context->trusted && $form->isPrivate() && $link === null && ! $this->tokens->isValid($form, $input[$this->tokens->field()] ?? null)) {

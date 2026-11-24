@@ -8,7 +8,7 @@ A text input a person never sees (moved off-screen, excluded from the tab order 
 
 ## Time trap and single-use token
 
-The rendered form carries an encrypted token with the form id, the time it was rendered and a nonce. A submission whose token is missing, tampered with, issued for another form, or younger than `spam.min_seconds` (default 2) is dropped, and a token that already produced a submission cannot produce another (remembered for `spam.token_ttl` minutes, 120 by default). Per form: **Minimum seconds before submit**; 0 disables the time trap. Headless clients get a token from the definition endpoint and send it back under `protection.token_field`.
+The rendered form carries an encrypted token with the form id, the time it was rendered and a nonce. A submission whose token is missing, tampered with, issued for another form, or younger than `spam.min_seconds` (default 2) is dropped, and a token that already produced a submission cannot produce another. A token is valid for `spam.token_ttl` minutes (1440, a day, by default); after that the visitor is asked to reload the page, and a headless client fetches a new one. Per form: **Minimum seconds before submit**; 0 disables the time trap. Headless clients get a token from the definition endpoint and send it back under `protection.token_field`.
 
 ## Rate limit
 

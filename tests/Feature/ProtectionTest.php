@@ -5,9 +5,11 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Packstub\FormBuilder\Events\SpamDetected;
 use Packstub\FormBuilder\Exceptions\FormClosedException;
+use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\FormSubmission;
 use Packstub\FormBuilder\Submissions\PasswordGate;
 use Packstub\FormBuilder\Submissions\ProtectionToken;
+use Packstub\FormBuilder\Submissions\SpamGuard;
 use Packstub\FormBuilder\Submissions\SubmissionContext;
 use Packstub\FormBuilder\Submissions\Submitter;
 
@@ -219,4 +221,45 @@ it('still rejects tokens of other forms and unsigned ones', function (): void {
 
     expect($tokens->isUsed($form, 'garbage'))->toBeFalse()
         ->and($tokens->age($form, $tokens->make(contactForm(['slug' => 'b']))))->toBeNull();
+});
+
+it('asks to reload the page once the token is older than token_ttl', function (): void {
+    config(['packstub-form-builder.spam.token_ttl' => 60]);
+    $form = contactForm(['settings' => ['visibility' => 'private']]);
+    $tokens = app(ProtectionToken::class);
+    $old = $tokens->make($form, time() - 61 * 60);
+
+    expect($tokens->isExpired($form, $old))->toBeTrue()
+        ->and($tokens->isExpired($form, $tokens->make($form)))->toBeFalse();
+
+    $this->postJson('/forms/contact', contactInput($form, ['_fb_token' => $old]))
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'This page has expired. Please reload it and send the form again.');
+    $this->postJson('/forms/contact/validate', ['_fb_fields' => ['name'], 'name' => 'Ada', '_fb_token' => $old])->assertStatus(422);
+
+    expect(FormSubmission::query()->count())->toBe(0);
+
+    $this->postJson('/forms/contact', contactInput($form))->assertOk();
+    expect(FormSubmission::query()->count())->toBe(1);
+});
+
+it('claims a token before storing, so a racing second post is dropped', function (): void {
+    $form = contactForm();
+    $input = contactInput($form);
+
+    // The other request claimed the token after this one's spam check passed.
+    app()->instance(SpamGuard::class, new class(app(ProtectionToken::class)) extends SpamGuard
+    {
+        public function reason(Form $form, array $input, SubmissionContext $context): ?string
+        {
+            app(ProtectionToken::class)->claim($form, $input['_fb_token']);
+
+            return null;
+        }
+    });
+
+    $result = app(Submitter::class)->submit($form, $input, new SubmissionContext);
+
+    expect($result->spam)->toBeTrue()
+        ->and(FormSubmission::query()->count())->toBe(0);
 });

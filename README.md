@@ -288,7 +288,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `submissions.queue_notifications` | `true` | Queue the emails |
 | `submissions.retention_days`, `anonymize_after_days` | `0` | What `form-builder:prune` deletes and anonymises |
 | `uploads.disk`, `directory`, `max_kb`, `attach_max_kb` | `local`, `form-builder`, `10240`, `10240` | File uploads |
-| `spam.honeypot`, `honeypot_field`, `min_seconds`, `token_field`, `token_ttl` | on, `_fb_website`, `2`, `_fb_token`, `120` | Spam defaults (per form in the panel) |
+| `spam.honeypot`, `honeypot_field`, `min_seconds`, `token_field`, `token_ttl` | on, `_fb_website`, `2`, `_fb_token`, `1440` | Spam defaults (per form in the panel) |
 | `spam.allowed_origins`, `spam.blocklist.*` | `[]` | Origins and blocklists |
 | `captcha.*` | env | Turnstile, hCaptcha, reCAPTCHA keys and the default provider |
 | `notifications.from_email`, `from_name` | env | Email defaults |

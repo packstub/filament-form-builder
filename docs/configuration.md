@@ -32,7 +32,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `spam.honeypot_field` | `_fb_website` | Name of the honeypot input |
 | `spam.min_seconds` | `2` | Time-trap default (per form in the panel) |
 | `spam.token_field` | `_fb_token` | Name of the token input |
-| `spam.token_ttl` | `120` | Minutes a used token is remembered |
+| `spam.token_ttl` | `1440` | Minutes a token is valid; a used one is remembered that long |
 | `spam.allowed_origins` | `[]` | Hosts the form may be posted from (empty: any) |
 | `spam.blocklist.words`, `email_domains`, `ips` | `[]` | Drop submissions that match |
 | `captcha.default` | `null` | Provider for forms that pick none: `turnstile`, `hcaptcha`, `recaptcha` |
