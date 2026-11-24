@@ -23,11 +23,11 @@ A security release. Please update: most of these fixes matter in a panel with te
 - Security: with tenancy, a form could send its emails as any address on your mailer; the sender address is now yours (`notifications.custom_from`)
 - Security: importing a form's JSON skipped the editor's checks; users, addresses, URLs and code it would refuse are now dropped
 - Security: the endpoint that checks one step of a multi-step form stored uploaded files and ignored private forms and passwords; it now stores nothing, answers only visitors the form would take a submission from, and is rate limited (`submissions.validate_throttle`)
-- Security: the Livewire form's password and submit weren't rate limited; they now share the HTTP routes' limit (`submissions.throttle`)
+- Security: the Livewire form's password and submit weren't rate limited; they now use the same limit setting as the HTTP routes (`submissions.throttle`), counted separately
 - Security: a form's token never expired, so it kept a private form open, and two posts racing with one token could both be stored; tokens now expire and are claimed before the insert
 - Security: a value starting with `=` became a live formula in the Excel and CSV exports; exports now keep it as text
 - Security: file download links from the panel never expired; they now last a day (`uploads.link_minutes`)
-- Security: with `spam.allowed_origins` set, a captcha solved on another site is refused, and reCAPTCHA must answer for the form's own action
+- Security: reCAPTCHA must answer for the form's own action, and with `spam.allowed_origins` set a captcha solved on another site is refused
 - Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
 - Fixed: two submissions arriving together could both take a form's or a share link's last place
 - Fixed: a single file posted without `[]` in the field name gave a server error

@@ -31,7 +31,7 @@ A submission whose `Origin` (or `Referer`) host is not on `allowed_origins` (whe
 
 ## Captcha
 
-Cloudflare Turnstile, hCaptcha and Google reCAPTCHA v3, verified on the server. Put the keys in `captcha` (or the `TURNSTILE_*`, `HCAPTCHA_*`, `RECAPTCHA_*` environment variables), then pick the provider per form under Settings › Spam protection, or set `captcha.default` for every form. Providers without keys are not offered. The widget renders in the Blade and Livewire renderers and on the hosted page; a missing or failed verification answers a validation error on `captcha`. With `spam.allowed_origins` set, the provider's hostname must be this site or one of those hosts, and a reCAPTCHA token must be for the `submit` action the form's script asks for. Headless clients read the provider, site key and the input name from `protection.captcha` in the definition and post the widget's response under that name.
+Cloudflare Turnstile, hCaptcha and Google reCAPTCHA v3, verified on the server. Put the keys in `captcha` (or the `TURNSTILE_*`, `HCAPTCHA_*`, `RECAPTCHA_*` environment variables), then pick the provider per form under Settings › Spam protection, or set `captcha.default` for every form. Providers without keys are not offered. The widget renders in the Blade and Livewire renderers and on the hosted page; a missing or failed verification answers a validation error on `captcha`. A reCAPTCHA token must be for the `submit` action the form's script asks for, and with `spam.allowed_origins` set the provider's hostname must be this site or one of those hosts. Headless clients read the provider, site key and the input name from `protection.captcha` in the definition and post the widget's response under that name.
 
 ## One per person and limits
 
