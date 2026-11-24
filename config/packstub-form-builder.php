@@ -166,7 +166,9 @@ return [
     | it. Keep a private disk; the panel serves downloads through a signed
     | route, with links valid for "link_minutes" (null: no expiry). "max_kb"
     | is the default size limit; "attach_max_kb" caps what the notification
-    | email attaches.
+    | email attaches. `form-builder:prune` deletes uploads no submission
+    | holds (a form that doesn't store submissions, a post that failed
+    | validation) once they are "orphan_days" old (0 keeps them).
     |
     */
 
@@ -176,6 +178,7 @@ return [
         'max_kb' => 10240,
         'attach_max_kb' => 10240,
         'link_minutes' => 1440,
+        'orphan_days' => 7,
     ],
 
     /*

@@ -64,3 +64,26 @@ it('takes a single file posted without brackets', function (): void {
 
     expect(Uploads::filesOf(FormSubmission::query()->sole(), 'cv'))->toHaveCount(1);
 });
+
+it('prunes uploads no submission holds once they are old enough', function (): void {
+    Storage::fake('local');
+    $kept = uploadForm();
+    $discarded = uploadForm('quick');
+    $discarded->update(['store_submissions' => false]);
+
+    $this->postJson('/forms/apply', ['cv' => [UploadedFile::fake()->create('cv.pdf', 10)]])->assertOk();
+    $this->postJson('/forms/quick', ['cv' => [UploadedFile::fake()->create('cv.pdf', 10)]])->assertOk();
+    $held = Storage::disk('local')->files(Uploads::directory($kept));
+    $stray = Storage::disk('local')->files(Uploads::directory($discarded));
+
+    expect($held)->toHaveCount(1)->and($stray)->toHaveCount(1);
+
+    $this->artisan('form-builder:prune')->expectsOutputToContain('deleted 0 unused upload(s)')->assertSuccessful();
+
+    $this->travel(8)->days();
+    $this->artisan('form-builder:prune', ['--dry-run' => true])->expectsOutputToContain('would delete 1 unused upload(s)')->assertSuccessful();
+    $this->artisan('form-builder:prune')->assertSuccessful();
+
+    Storage::disk('local')->assertExists($held[0]);
+    Storage::disk('local')->assertMissing($stray[0]);
+});

@@ -204,7 +204,7 @@ it('anonymises and prunes old submissions', function (): void {
     $recent->forceFill(['created_at' => now()->subDays(20)])->save();
     $kept->forceFill(['created_at' => now()->subDays(400)])->save();
 
-    $this->artisan('form-builder:prune', ['--dry-run' => true])->expectsOutputToContain('Would delete 1 submission(s), would anonymise 3.')->assertSuccessful();
+    $this->artisan('form-builder:prune', ['--dry-run' => true])->expectsOutputToContain('Would delete 1 submission(s), would anonymise 3, would delete 0 unused upload(s).')->assertSuccessful();
     expect(FormSubmission::query()->count())->toBe(3);
 
     $this->artisan('form-builder:prune')->assertSuccessful();

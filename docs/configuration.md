@@ -28,6 +28,7 @@ php artisan vendor:publish --tag=packstub-form-builder-config
 | `uploads.disk`, `uploads.directory` | `local`, `form-builder` | Where the file upload field stores files |
 | `uploads.max_kb` | `10240` | Default size limit of an upload |
 | `uploads.attach_max_kb` | `10240` | What the team email attaches at most, in total |
+| `uploads.orphan_days` | `7` | `form-builder:prune` deletes uploads no submission holds once they are this old (0 keeps them) |
 | `uploads.link_minutes` | `1440` | How long a download link from the panel stays valid; `null` never expires |
 | `spam.honeypot` | `true` | Honeypot default (per form in the panel) |
 | `spam.honeypot_field` | `_fb_website` | Name of the honeypot input |
