@@ -19,6 +19,7 @@ A security release for panels with tenancy. Please update.
 - Security: a webhook could reach private addresses (cloud metadata, localhost) and follow redirects; it now connects to the checked public address and follows none
 - Security: with tenancy, a choice source on a public page ran outside any workspace and could list every workspace's rows; it now runs inside the form's workspace
 - Security: with tenancy, a form could send its emails as any address on your mailer; the sender address is now yours (`notifications.custom_from`)
+- Security: importing a form's JSON skipped the editor's checks; users, addresses, URLs and code it would refuse are now dropped
 - Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
 - Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy
 - `composer.json`'s homepage points at the package's page on packstub.dev

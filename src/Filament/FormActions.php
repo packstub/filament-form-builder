@@ -23,7 +23,10 @@ use Packstub\FormBuilder\FormBuilderPlugin;
 use Packstub\FormBuilder\Livewire\FormBuilderForm;
 use Packstub\FormBuilder\Models\Form;
 use Packstub\FormBuilder\Models\ShareLink;
+use Packstub\FormBuilder\Notifications\ChannelMessage;
+use Packstub\FormBuilder\Submissions\SubmissionResult;
 use Packstub\FormBuilder\Templates\Templates;
+use Packstub\FormBuilder\Webhooks\OutboundUrl;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -294,7 +297,7 @@ class FormActions
                     return;
                 }
 
-                $form = static::createFrom($definition);
+                $form = static::createFrom(static::sanitizeImport($definition));
 
                 Notification::make()->title(__('packstub-form-builder::form-builder.actions.imported'))->success()->send();
 
@@ -336,6 +339,90 @@ class FormActions
 
                 redirect(FormBuilderPlugin::get()->getResource()::getUrl('edit', ['record' => $form]));
             });
+    }
+
+    /**
+     * Drop what the editor would not accept from an imported definition, so
+     * a file can't carry settings past the panel's validation: users who
+     * can't be picked here, URLs that aren't http(s) or reach private
+     * networks, invalid addresses, a sender address or custom code the
+     * panel doesn't allow.
+     *
+     * @param  array<string, mixed>  $definition
+     * @return array<string, mixed>
+     */
+    public static function sanitizeImport(array $definition): array
+    {
+        $email = fn (mixed $value): bool => is_string($value) && filter_var(trim($value), FILTER_VALIDATE_EMAIL) !== false;
+        $emails = fn (mixed $values): array => array_values(array_filter(is_array($values) ? $values : [], $email));
+        $webUrl = fn (mixed $value): bool => is_string($value) && in_array(strtolower((string) parse_url($value, PHP_URL_SCHEME)), ['http', 'https'], true) && filter_var($value, FILTER_VALIDATE_URL) !== false;
+
+        if (isset($definition['redirect_url']) && ! (is_string($definition['redirect_url']) && SubmissionResult::isSafeRedirect($definition['redirect_url']))) {
+            unset($definition['redirect_url']);
+        }
+
+        if (array_key_exists('notification_emails', $definition)) {
+            $definition['notification_emails'] = $emails($definition['notification_emails']);
+        }
+
+        $settings = is_array($definition['settings'] ?? null) ? $definition['settings'] : [];
+
+        foreach (['notify_cc', 'notify_bcc'] as $key) {
+            if (array_key_exists($key, $settings)) {
+                $settings[$key] = $emails($settings[$key]);
+            }
+        }
+
+        if (array_key_exists('notify_from_email', $settings) && (! FormBuilder::allowsCustomFrom() || ! $email($settings['notify_from_email']))) {
+            unset($settings['notify_from_email']);
+        }
+
+        if (array_key_exists('notify_users', $settings)) {
+            $allowed = app(FormBuilder::class)->currentPanelUsers()->map(fn ($user): string => (string) $user->getKey())->all();
+            $settings['notify_users'] = array_values(array_filter(
+                is_array($settings['notify_users']) ? $settings['notify_users'] : [],
+                fn (mixed $id): bool => (is_int($id) || is_string($id)) && in_array((string) $id, $allowed, true),
+            ));
+        }
+
+        if (array_key_exists('webhook_url', $settings) && ! ($webUrl($settings['webhook_url']) && OutboundUrl::allows($settings['webhook_url']))) {
+            unset($settings['webhook_url']);
+        }
+
+        if (isset($settings['webhook_method']) && ! in_array($settings['webhook_method'], ['POST', 'PUT', 'PATCH'], true)) {
+            unset($settings['webhook_method']);
+        }
+
+        if (array_key_exists('channels', $settings)) {
+            $settings['channels'] = array_values(array_filter(
+                is_array($settings['channels']) ? $settings['channels'] : [],
+                fn (mixed $channel): bool => is_array($channel)
+                    && in_array($channel['provider'] ?? null, ChannelMessage::PROVIDERS, true)
+                    && $webUrl($channel['url'] ?? null)
+                    && str_starts_with((string) $channel['url'], 'https://')
+                    && OutboundUrl::allows((string) $channel['url']),
+            ));
+        }
+
+        foreach (['page_image', 'page_logo'] as $key) {
+            if (array_key_exists($key, $settings) && ! $webUrl($settings[$key])) {
+                unset($settings[$key]);
+            }
+        }
+
+        if (! FormBuilder::allowsCustomCss() || ! is_string($settings['custom_css'] ?? '') || mb_strlen((string) ($settings['custom_css'] ?? '')) > 5000) {
+            unset($settings['custom_css']);
+        }
+
+        if (! FormBuilder::allowsCustomJs() || ! is_string($settings['custom_js'] ?? '') || mb_strlen((string) ($settings['custom_js'] ?? '')) > 2000) {
+            unset($settings['custom_js']);
+        }
+
+        if (array_key_exists('settings', $definition)) {
+            $definition['settings'] = $settings;
+        }
+
+        return $definition;
     }
 
     /**
