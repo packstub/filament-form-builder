@@ -68,8 +68,9 @@ class Submitter
 
         try {
             if ($form->store_submissions) {
-                DB::transaction(function () use ($form, $submission): void {
+                DB::transaction(function () use ($form, $submission, $link, $context): void {
                     $submission->number = $this->nextNumber($form);
+                    $this->assertRoomLeft($form, $link, $context);
                     $submission->save();
                 });
             }
@@ -306,6 +307,27 @@ class Submitter
      * The next sequential number of the form's submissions, under a lock on
      * the form row.
      */
+    /**
+     * The limits again, with the form row locked (nextNumber()): two posts
+     * that both passed the first check can't both take the last place.
+     *
+     * @throws FormClosedException
+     */
+    protected function assertRoomLeft(Form $form, ?ShareLink $link, SubmissionContext $context): void
+    {
+        if (($max = $form->maxSubmissions()) !== null && $form->submissions()->count() >= $max) {
+            throw new FormClosedException((string) $form->setting('full_message', __('packstub-form-builder::form-builder.frontend.full')));
+        }
+
+        if ($link !== null && ($reason = $link->closedReason()) !== null) {
+            throw new FormClosedException($reason);
+        }
+
+        if ($form->onePerPerson() && $this->hasSubmitted($form, $context)) {
+            throw new FormClosedException((string) $form->setting('already_submitted_message', __('packstub-form-builder::form-builder.frontend.already_submitted')));
+        }
+    }
+
     protected function nextNumber(Form $form): int
     {
         $locked = $form->newQueryWithoutScopes()->whereKey($form->getKey())->lockForUpdate()->first();

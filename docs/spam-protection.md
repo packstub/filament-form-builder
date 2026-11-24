@@ -35,7 +35,7 @@ Cloudflare Turnstile, hCaptcha and Google reCAPTCHA v3, verified on the server. 
 
 ## One per person and limits
 
-**One submission per person** (by user id when signed in, else by a hash of the IP address and the user agent) and **Maximum submissions** are in Settings › Limits; both answer with a message of your own.
+**One submission per person** (by user id when signed in, else by a hash of the IP address and the user agent) and **Maximum submissions** are in Settings › Limits; both answer with a message of your own. For guests, one per person is a courtesy limit: another browser or network counts as another person. Turn on **Require a logged-in user** where it must hold.
 
 ## What the sender sees
 

@@ -263,3 +263,22 @@ it('claims a token before storing, so a racing second post is dropped', function
     expect($result->spam)->toBeTrue()
         ->and(FormSubmission::query()->count())->toBe(0);
 });
+
+it('checks the submission limit again with the form locked, so a racing post can\'t take the last place', function (): void {
+    $form = contactForm(['settings' => ['max_submissions' => 1, 'full_message' => 'All seats are taken.']]);
+
+    // Another request stores the last place after this one passed the first check.
+    app()->instance(SpamGuard::class, new class(app(ProtectionToken::class)) extends SpamGuard
+    {
+        public function reason(Form $form, array $input, SubmissionContext $context): ?string
+        {
+            FormSubmission::query()->create(['form_id' => $form->getKey(), 'number' => 1, 'data' => []]);
+
+            return null;
+        }
+    });
+
+    expect(fn () => app(Submitter::class)->submit($form, contactInput($form), new SubmissionContext))
+        ->toThrow(FormClosedException::class, 'All seats are taken.')
+        ->and(FormSubmission::query()->count())->toBe(1);
+});

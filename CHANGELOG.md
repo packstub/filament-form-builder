@@ -27,6 +27,7 @@ A security release for panels with tenancy. Please update.
 - Security: a form's token never expired, so it kept a private form open, and two posts racing with one token could both be stored; tokens now expire and are claimed before the insert
 - Security: a value starting with `=` became a live formula in the Excel and CSV exports; exports now keep it as text
 - Custom CSS and JavaScript can be turned off for every form (`frontend.custom_css`, `frontend.custom_js`)
+- Fixed: two submissions arriving together could both take a form's or a share link's last place
 - Fixed: a single file posted without `[]` in the field name gave a server error
 - Fixed: links to a form's submissions in emails, panel notifications and chat messages were left out in a panel with tenancy
 - `composer.json`'s homepage points at the package's page on packstub.dev
