@@ -5,6 +5,7 @@ namespace Packstub\FormBuilder;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Foundation\Http\Events\RequestHandled;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -74,7 +75,7 @@ class FormBuilderServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         // Resolved choices last one request (Octane) or one job (a worker).
-        Event::listen([RequestHandled::class, JobProcessed::class], function (): void {
+        Event::listen([RequestHandled::class, JobProcessed::class, JobFailed::class], function (): void {
             if ($this->app->resolved(ChoiceSources::class)) {
                 $this->app->make(ChoiceSources::class)->flush();
             }

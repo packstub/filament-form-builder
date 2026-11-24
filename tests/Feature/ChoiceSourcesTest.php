@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Contracts\Queue\Job;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Validation\ValidationException;
@@ -128,4 +129,9 @@ it('resolves a source per field definition and forgets the choices after each re
     $sources->resolve('levels', $basic);
 
     expect($calls)->toBe(3);
+
+    event(new JobFailed('sync', Mockery::mock(Job::class), new RuntimeException('boom')));
+    $sources->resolve('levels', $basic);
+
+    expect($calls)->toBe(4);
 });
